@@ -1,0 +1,34 @@
+{
+  "env": {
+    "browser": true,
+    "commonjs": true,
+    "es2021": true
+  },
+  "extends": ["plugin:react/recommended", "airbnb", "prettier"],
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": 12
+  },
+  "plugins": ["react"],
+  "rules": {
+    "prettier/prettier": "off",
+    "no-unused-vars": ["error", { "argsIgnorePattern": "req|res|next|val" }],
+    "no-console": "warn",
+    "func-names": "off",
+    "no-process-exit": "off",
+    "object-shorthand": "off",
+    "class-methods-use-this": "off",
+    "no-empty-function": "warn",
+    "consistent-return": "off",
+    "prefer-arrow-callback": "off",
+    "no-param-reassign": "off",
+    "prefer-destructuring": ["error", { "object": true, "array": false }],
+    "no-underscore-dangle": "off",
+    "no-return-await": "off",
+    "eslint dot-notation": "off",
+    "no-unused-expressions": "off",
+    "no-unreachable": "off"
+  }
+}

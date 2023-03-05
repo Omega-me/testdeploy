@@ -1,0 +1,1 @@
+exports.NO_DOC_FOUND = 'No document found with that ID'

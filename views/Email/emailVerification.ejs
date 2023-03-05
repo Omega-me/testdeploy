@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <link href="https://fonts.cdnfonts.com/css/circular-std" rel="stylesheet" />
+    <link href="https://fonts.cdnfonts.com/css/poppins" rel="stylesheet" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <script
+      src="https://kit.fontawesome.com/b596d003dd.js"
+      crossorigin="anonymous"
+    ></script>
+    <style>
+      .header-image > img {
+        height: auto;
+        width: 100%;
+        margin-top: 35px;
+      }
+
+      .header-text-main {
+        color: #868686;
+        font-size: 50px !important;
+        margin-bottom: 1rem;
+      }
+
+      .header-text-main-dynamic {
+        color: #868686;
+        font-size: 35px !important;
+        margin-bottom: 4rem;
+      }
+
+      .dynamic-url {
+        color: white;
+        text-decoration: none;
+        padding: 20px 35px;
+        background-color: #faab36;
+        border-radius: 5px;
+      }
+
+      .dynamic-url:hover {
+        color: white;
+        text-decoration: none;
+      }
+
+      .header-text-sub {
+        color: #868686;
+        font-size: 20px;
+      }
+      .orange-dot {
+        color: #faab36 !important;
+        font-size: 60px;
+      }
+
+      .footer {
+        background-color: #effef3;
+      }
+
+      .footer-heading {
+        border-bottom: solid #a8e1b8 1px;
+      }
+
+      .footer-heading h5 {
+        color: #515151;
+        font-size: 22px;
+      }
+
+      .footer-link {
+        color: #868686 !important;
+        text-decoration: none;
+        font-weight: 100 !important;
+        font-size: 18px;
+        display: block;
+        margin-top: 10px;
+      }
+      .footer-link:hover {
+        color: #faab36 !important;
+      }
+
+      .copyright-text {
+        color: #515151;
+        font-size: 16px;
+      }
+
+      .navbar {
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+      }
+
+      @media only screen and (min-width: 768px) {
+        .father-container {
+          width: 60%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <center>
+      <div class="father-container">
+        <nav class="navbar navbar-expand-lg navbar-light py-4">
+          <img
+            class="navbar-brand"
+            crossorigin="anonymous"
+            src="<%= imagesUrl %>/logo.png"
+          />
+        </nav>
+        <header>
+          <div class="container-fluid">
+            <div class="row pos-rel">
+              <div
+                class="px-3 pt-xl-5 pt-lg-0 pt-md-2 pt-sm-3 pt-4 pb-md-2 header-detail"
+              >
+                <div>
+                  <h5 class="header-text-main-dynamic">
+                    Verify your email by clicking the button.
+                  </h5>
+                  <a class="dynamic-url" href="<%= url %>" target="_blank"
+                    >Verify</a
+                  >
+                </div>
+                <div class="text-center pt-xl-5 pt-md-3">
+                  <h2 class="header-text-main">
+                    <span class="display1">Monthly Furnished</span><br /><span
+                      class="display2"
+                      >Rentals for <b>Nurses</b></span
+                    ><span class="orange-dot">.</span>
+                  </h2>
+                  <p class="header-text-sub">
+                    Search millions of apartments, houses for rent with
+                    <br />our exclusive Platform.
+                  </p>
+                </div>
+              </div>
+
+              <div class="header-image">
+                <img
+                  crossorigin="anonymous"
+                  src="<%= imagesUrl %>/Header-back-2.jpg"
+                  class=""
+                />
+              </div>
+            </div>
+          </div>
+        </header>
+        <footer class="footer">
+          <div class="container">
+            <div class="row py-5 px-md-0 px-5">
+              <div class="col-md-12">
+                <div class="footer-heading">
+                  <h5 class="bold mb-2">Quick Links</h5>
+                </div>
+                <div class="row pt-3">
+                  <div class="col-md-4">
+                    <a href="#" class="footer-link">About us</a>
+                    <a href="#" class="footer-link">Contact</a>
+                    <a href="#" class="footer-link">Property Owner</a>
+                  </div>
+                  <div class="col-md-4">
+                    <a href="#" class="footer-link">FAQs</a>
+                    <a href="#" class="footer-link">Privacy Policy</a>
+                    <a href="#" class="footer-link">Terms of use</a>
+                  </div>
+                  <div class="col-md-4">
+                    <a href="#" class="footer-link">Blog</a>
+                    <a href="#" class="footer-link">List Property</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row pt-2 pb-5">
+              <div class="col-md-6 copyright-container">
+                <span class="copyright-text"
+                  >&copy; 2023 Nurses Rent | All Rights Reserved</span
+                >
+              </div>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </center>
+  </body>
+</html>
