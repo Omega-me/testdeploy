@@ -79,7 +79,7 @@ const hostSchema = new mongoose.Schema(
       enum: [CONST.HOST_ROLE],
     },
     isSubscriber: {
-      type: String,
+      type: Boolean,
       default: false,
     },
     stripeAccountId: String,

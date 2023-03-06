@@ -113,7 +113,7 @@ exports.verify = catchAsync(async (req, res, next) => {
   // create a stripe customer
   const customer = await stripe.customers.create({
     email: host.email,
-    name: `${host.displayName}`,
+    name: `${host.firstName} ${host.lastName}`,
   });
   host.stripeCustomerId = customer.id;
 

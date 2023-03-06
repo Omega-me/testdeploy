@@ -8,8 +8,13 @@ const AppError = require('../common/utils/AppError');
 const CONST = require('../common/constants');
 
 exports.checkValidToSubscribe = catchAsync(async (req, res, next) => {
-  if (!req.user.stripeCustomerId) {
-    return next(new AppError('This user is not valid.', CONST.FORBIDDEN));
+  if (!req.user.stripeCustomerId && !req.user.stripeAccountId) {
+    return next(
+      new AppError(
+        'User not valid, please connect for payment and subscription.',
+        CONST.FORBIDDEN
+      )
+    );
   }
 
   if (req.user.isSubscriber) {
@@ -71,19 +76,7 @@ exports.createSubscriptionPlan = catchAsync(async (req, res, next) => {
     );
   }
 
-  res.status(CONST.OK).json({
-    status: CONST.SUCCESS,
-    data: {
-      priceId: price.id,
-    },
-  });
-});
-
-exports.getSubscriptionPlanPrice = catchAsync(async (req, res, next) => {
-  // get the subscription plan price
-  const { priceId } = req.params;
-  const price = await stripe.prices.retrieve(priceId);
-  req.subscriptionPrice = price;
+  req.price = price;
 
   next();
 });
@@ -99,13 +92,13 @@ exports.createSubCheckoutSession = catchAsync(async (req, res, next) => {
     mode: 'payment',
     cancel_url: process.env.FRONTEND_URL,
     success_url: suscessUrl,
-    currency: req.subscriptionPrice.currency,
+    currency: req.price.currency,
     customer: req.user.stripeCustomerId,
     client_reference_id: req.user._id,
     payment_method_types: ['card'],
     line_items: [
       {
-        price: req.subscriptionPrice.id,
+        price: req.price.id,
         quantity: 1,
       },
     ],

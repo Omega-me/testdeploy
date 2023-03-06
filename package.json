@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev:prod": "set NODE_ENV=production&&nodemon index.js",
+    "prod": "set NODE_ENV=production&&nodemon index.js",
     "dev": "nodemon index.js",
     "debug": "ndb index.js"
   },

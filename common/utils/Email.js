@@ -13,25 +13,13 @@ class Email {
     this.to = user.email;
     this.user = user;
     this.url = url;
-    this.from = `Nurses rent <${process.env.EMAIL_FROM}>`;
+    this.from = process.env.EMAIL_FROM;
     this.next = next;
     this.isSuccess = false;
     this.errorMessage = errorMessage;
   }
 
   transporter() {
-    // if (process.env.NODE_ENV === CONST.PROD) {
-    //   return nodemailer.createTransport({
-    //     host: 'smtp.sendgrid.net',
-    //     port: Number(process.env.SENDGRID_PORT),
-    //     secure: true,
-    //     auth: {
-    //       user: process.env.SENDGRID_USERNAME,
-    //       pass: process.env.SENDGRID_PASSWORD,
-    //     },
-    //   });
-    // }
-
     return nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
       port: Number(process.env.EMAIL_PORT),

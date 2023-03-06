@@ -80,7 +80,7 @@ router.post(CONST.LOGOUT, nurseAuth.logOut);
 
 // Subscriptions and payments
 router.get(
-  CONST.CREATE_SUBSCRIPTION_PLAN,
+  CONST.SUBSCRIBE,
   checkLoginType,
   conditional(
     function (req, res, next) {
@@ -91,22 +91,7 @@ router.get(
   ),
   restrictTo(CONST.NURSE_ROLE),
   nurseController.checkValidToSubscribe,
-  nurseController.createSubscriptionPlan
-);
-
-router.get(
-  `${CONST.CREATE_SUBSCRIPTION_CHECKOUT_SESSION}/:priceId`,
-  checkLoginType,
-  conditional(
-    function (req, res, next) {
-      return req.role === CONST.NURSE_ROLE;
-    },
-    nurseAuth.protect,
-    hostAuth.protect
-  ),
-  restrictTo(CONST.NURSE_ROLE),
-  nurseController.checkValidToSubscribe,
-  nurseController.getSubscriptionPlanPrice,
+  nurseController.createSubscriptionPlan,
   nurseController.createSubCheckoutSession
 );
 

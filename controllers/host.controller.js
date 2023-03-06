@@ -8,20 +8,13 @@ const CONST = require('../common/constants');
 const catchAsync = require('../common/utils/catchAsync');
 
 exports.checkValidToSubscribe = catchAsync(async (req, res, next) => {
-  if (!req.user.stripeCustomerId) {
-    return next(new AppError('This user is not valid.', CONST.FORBIDDEN));
-  }
-
-  const subscriptions = await stripe.subscriptions.list({
-    customer: req.user.stripeCustomerId,
-    limit: 1,
-  });
-
-  if (
-    subscriptions.data.length > 0 &&
-    subscriptions.data[0].status === 'active'
-  ) {
-    return next(new AppError('This user has an active plan.', CONST.FORBIDDEN));
+  if (!req.user.stripeCustomerId && !req.user.stripeAccountId) {
+    return next(
+      new AppError(
+        'User not valid, please connect for payment and subscription.',
+        CONST.FORBIDDEN
+      )
+    );
   }
 
   if (req.user.isSubscriber) {
@@ -46,9 +39,11 @@ exports.createSubscriptionPlan = catchAsync(async (req, res, next) => {
     );
 
   let hostPlan;
+  let price;
   try {
     // Retrieve the subscription plan from stripe for the host
     hostPlan = await stripe.plans.retrieve(subscriptionPricing[0].stripePlanId);
+    price = await stripe.prices.retrieve(subscriptionPricing[0].stripePriceId);
   } catch (_) {
     // Create a subscription plan for the host on stripe
     hostPlan = await stripe.plans.create({
@@ -60,34 +55,21 @@ exports.createSubscriptionPlan = catchAsync(async (req, res, next) => {
       },
     });
 
+    price = await stripe.prices.retrieve(hostPlan.id);
+
     // Update the pricing id on database
     await SubscriptionPricing.findByIdAndUpdate(
       subscriptionPricing[0]._id,
       {
         stripePlanId: hostPlan.id,
         stripeProductId: hostPlan.product,
+        stripePriceId: price.id,
       },
       { new: true, runValidators: true }
     );
   }
 
-  res.status(CONST.OK).json({
-    status: CONST.SUCCESS,
-    data: {
-      productId: hostPlan.product,
-    },
-  });
-});
-
-exports.getSubscriptionPlanPrice = catchAsync(async (req, res, next) => {
-  // get the subscription plan price
-  const { productId } = req.params;
-  const price = await stripe.prices.search({
-    query: `product:'${productId}'`,
-  });
-
-  req.subscriptionPrice = price.data[0];
-
+  req.price = price;
   next();
 });
 
@@ -101,13 +83,13 @@ exports.createSubCheckoutSession = catchAsync(async (req, res, next) => {
     mode: 'subscription',
     cancel_url: process.env.FRONTEND_URL,
     success_url: cuscessUrl,
-    currency: req.subscriptionPrice.currency,
+    currency: req.price.currency,
     customer: req.user.stripeCustomerId,
     client_reference_id: req.user._id,
     payment_method_types: ['card'],
     line_items: [
       {
-        price: req.subscriptionPrice.id,
+        price: req.price.id,
         quantity: 1,
       },
     ],

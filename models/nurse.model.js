@@ -114,7 +114,7 @@ const nurseSchema = new mongoose.Schema(
       enum: [CONST.NURSE_ROLE],
     },
     isSubscriber: {
-      type: String,
+      type: Boolean,
       default: false,
     },
     stripeCustomerId: String,

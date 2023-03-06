@@ -19,9 +19,7 @@ exports.NURSE = 'nurses';
 exports.HOST = 'hosts';
 exports.GROUPS = 'groups';
 exports.PRICINGS = 'pricings';
-exports.CREATE_SUBSCRIPTION_PLAN = '/create-subscription-plan';
-exports.CREATE_SUBSCRIPTION_CHECKOUT_SESSION =
-  '/create-subscription-checkout-session';
+exports.SUBSCRIBE = '/subscribe';
 exports.CREATE_SUBSCRIPTION_BOOKING = '/create-subscription-booking';
 exports.SIGNUP = '/signup';
 exports.VERIFYACCOUNT = '/sendverificationtoken';
