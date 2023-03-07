@@ -106,9 +106,10 @@ exports.createSubCheckoutSession = catchAsync(async (req, res, next) => {
 });
 
 const createSubscriptionBookingProd = async (event) => {
-  const host = await Host.find({
+  const hosts = await Host.find({
     email: event.data.object.customer_details.email,
   });
+  const host = hosts[0];
 
   const subscription = await stripe.subscriptions.retrieve(
     event.data.object.subscription
@@ -129,8 +130,8 @@ const createSubscriptionBookingProd = async (event) => {
     currency: subscription.plan.currency,
     productId: subscription.plan.product,
     customerId: subscription.customer,
-    userId: host[0]._id,
-    customerRole: host[0].role,
+    userId: host._id,
+    customerRole: host.role,
     latestInvoiceId: subscription.latest_invoice,
     email: defaultPayment.billing_details.email,
     name: defaultPayment.billing_details.name,
@@ -149,7 +150,7 @@ const createSubscriptionBookingProd = async (event) => {
 
   // Create a subscription booking
   const foundedSubsciptionBooking = await Subscription.find({
-    userId: host[0]._id,
+    userId: host._id,
   });
 
   if (foundedSubsciptionBooking.length > 0) {
@@ -161,8 +162,8 @@ const createSubscriptionBookingProd = async (event) => {
   );
 
   // update host
-  host[0].isSubscriber = true;
-  host[0].subscription = subscriptionBooking._id;
+  host.isSubscriber = true;
+  host.subscription = subscriptionBooking._id;
   await host.save({ validateBeforeSave: false });
 };
 
