@@ -115,7 +115,7 @@ exports.createSubCheckoutSession = catchAsync(async (req, res, next) => {
 });
 
 const createSubscriptionBookingProd = async (event) => {
-  const nurses = await Nurse.findById({
+  const nurses = await Nurse.find({
     email: event.data.object.customer_details.email,
   });
   const nurse = nurses[0];
