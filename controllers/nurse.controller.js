@@ -146,7 +146,7 @@ const createSubscriptionBookingProd = async (event) => {
     subscriptionId: charge.id,
     subscriptionproductId: plan.id,
     subscriptionStatus: 'active',
-    priceAmount: charge.amount,
+    priceAmount: charge.amount / 100,
     currency: charge.currency,
     productId: plan.product,
     customerId: charge.customer,
@@ -214,82 +214,8 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
 
 // Temporary
 exports.createSubscriptionBooking = catchAsync(async (req, res, next) => {
-  const nurses = await Nurse.find({
-    email: 'olkentestsub@gmail.com',
-  });
-
-  const nurse = nurses[0];
-
-  const subscriptionPricing = await SubscriptionPricing.find({
-    userRole: 'Nurse',
-  });
-
-  const charges = await stripe.charges.list({
-    customer: nurse.stripeCustomerId,
-    limit: 1,
-  });
-  let charge;
-  if (charges.data[0]) {
-    charge = charges.data[0];
-  }
-
-  let defaultPayment;
-  if (charge) {
-    defaultPayment = await stripe.paymentMethods.retrieve(
-      charge.payment_method
-    );
-  }
-
-  const plan = await stripe.plans.retrieve(subscriptionPricing[0].stripePlanId);
-
-  const subscriptionBookingData = {
-    subscriptionId: charge.id,
-    subscriptionproductId: plan.id,
-    subscriptionStatus: 'active',
-    priceAmount: charge.amount,
-    currency: charge.currency,
-    productId: plan.product,
-    customerId: charge.customer,
-    userId: nurse._id,
-    customerRole: nurse.role,
-    latestInvoiceId: charge.invoice,
-    email: defaultPayment.billing_details.email,
-    name: defaultPayment.billing_details.name,
-    brand: defaultPayment.card.brand,
-    country: defaultPayment.card.country,
-    expMonth: defaultPayment.card.exp_month,
-    expYear: defaultPayment.card.exp_year,
-    funding: defaultPayment.card.funding,
-    last4: defaultPayment.card.last4,
-    created: new Date(defaultPayment.created * 1000),
-    type: defaultPayment.type,
-    oneTimeSubscription: true,
-    startedAt: new Date(charge.created * 1000),
-    endsAt: new Date('9999-12-31T23:59:59'),
-  };
-
-  // // Create a subscription booking
-  const foundedSubsciptionBooking = await Subscription.find({
-    userId: nurse._id,
-  });
-
-  if (foundedSubsciptionBooking.length > 0) {
-    await Subscription.findByIdAndDelete(foundedSubsciptionBooking[0]._id);
-  }
-
-  const subscriptionBooking = await Subscription.create(
-    subscriptionBookingData
-  );
-
-  // update user and make it subscriber
-  nurse.isSubscriber = true;
-  nurse.subscription = subscriptionBooking._id;
-  await nurse.save({ validateBeforeSave: false });
-
   res.json({
-    // subscriptionBooking,
-    // nurse,
-    subscriptionBookingData,
+    teste: 'test',
   });
 });
 // TODO: Create a function that deletes the booking for the database when the user cancel the subscription

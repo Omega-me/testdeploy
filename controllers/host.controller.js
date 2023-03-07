@@ -190,9 +190,9 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
     recieved: true,
   });
 });
+
 // Temporary
 exports.createSubscriptionBooking = catchAsync(async (req, res, next) => {
-  // TODO: it should not work if user has not paid the plan because it causes propgramming errors of undefined (it will be fixed
   res.json({
     test: 'test',
   });
