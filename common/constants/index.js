@@ -21,6 +21,7 @@ exports.GROUPS = 'groups';
 exports.PRICINGS = 'pricings';
 exports.SUBSCRIBTIONS = 'subscriptions';
 exports.SUBSCRIBE = '/subscribe';
+exports.CANCEL = 'cancel';
 exports.CREATE_SUBSCRIPTION_BOOKING = '/create-subscription-booking';
 exports.SIGNUP = '/signup';
 exports.VERIFYACCOUNT = '/sendverificationtoken';

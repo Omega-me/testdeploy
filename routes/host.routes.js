@@ -93,7 +93,7 @@ router.get(
   hostController.createSubCheckoutSession
 );
 router.get(
-  `${CONST.CREATE_SUBSCRIPTION_BOOKING}`,
+  `${CONST.SUBSCRIBE}/${CONST.CANCEL}`,
   checkLoginType,
   conditional(
     function (req, res, next) {
@@ -103,7 +103,7 @@ router.get(
     hostAuth.protect
   ),
   restrictTo(CONST.HOST_ROLE),
-  hostController.createSubscriptionBooking
+  hostController.cancelSubscription
 );
 
 router.route('/').get(hostController.getAll);

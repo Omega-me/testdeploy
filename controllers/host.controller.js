@@ -105,7 +105,7 @@ exports.createSubCheckoutSession = catchAsync(async (req, res, next) => {
   });
 });
 
-const createSubscriptionBookingProd = async (event) => {
+const createSubscriptionBooking = async (event) => {
   const hosts = await Host.find({
     email: event.data.object.customer_details.email,
   });
@@ -167,6 +167,21 @@ const createSubscriptionBookingProd = async (event) => {
   await host.save({ validateBeforeSave: false });
 };
 
+const deleteSubscriptionBooking = async (event) => {
+  const hosts = await Host.find({
+    email: event.data.object.customer_details.email,
+  });
+  const host = hosts[0];
+
+  await Subscription.findByIdAndDelete(host.subscription);
+
+  host.isSubscriber = false;
+  host.subscription = null;
+
+  await host.save({ validateBeforeSave: false });
+  console.log(event);
+};
+
 exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
   const sig = req.headers['stripe-signature'];
 
@@ -182,8 +197,33 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
     return res.status(CONST.BAD_REQUEST).send(`Webhook Error: ${err.message}`);
   }
 
-  if (event.type === 'checkout.session.completed') {
-    createSubscriptionBookingProd(event);
+  switch (event.type) {
+    case 'checkout.session.completed':
+      createSubscriptionBooking(event);
+      break;
+    case 'checkout.session.expired':
+      console.log('session expired');
+      break;
+    case 'customer.subscription.created':
+      console.log('susbcription created');
+      // send email to notify user for subscription
+      break;
+    case 'customer.subscription.deleted':
+      console.log('susbcripton deleted');
+      console.log(event.data.object);
+      deleteSubscriptionBooking(event);
+      break;
+    case 'customer.subscription.paused':
+      console.log('susbcripton paused');
+      break;
+    case 'customer.subscription.resumed':
+      console.log('susbcripton resumed');
+      break;
+    case 'customer.subscription.updated':
+      console.log('susbcripton updated');
+      break;
+    default:
+      console.log(`Unhandled event type ${event.type}`);
   }
 
   res.status(CONST.OK).json({
@@ -192,12 +232,26 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
 });
 
 // Temporary
-exports.createSubscriptionBooking = catchAsync(async (req, res, next) => {
+exports.developmentTestingMethode = catchAsync(async (req, res, next) => {
   res.json({
     test: 'test',
   });
 });
 
+exports.cancelSubscription = catchAsync(async (req, res, next) => {
+  if (!req.user.isSubscriber && !req.user.subscription) {
+    return next(
+      new AppError('This user is not a subscriber.', CONST.FORBIDDEN)
+    );
+  }
+
+  await stripe.subscriptions.del(req.user.subscription);
+
+  res.status(CONST.OK).json({
+    status: CONST.SUCCESS,
+    message: 'You are no longer a subscriber.',
+  });
+});
 // TODO: Create a function that deletes the booking form the database when the user cancel the subscription and changes the user status to a non subscriber
 
 const hostSelectedFields = [
