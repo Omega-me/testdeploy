@@ -168,18 +168,15 @@ const createSubscriptionBooking = async (event) => {
 };
 
 const deleteSubscriptionBooking = async (event) => {
-  const hosts = await Host.find({
-    email: event.data.object.customer_details.email,
-  });
-  const host = hosts[0];
+  const subscription = await Subscription.findById(event.data.object.id);
+  const host = await Host.findById(subscription.userId);
 
-  await Subscription.findByIdAndDelete(host.subscription);
+  await Subscription.findByIdAndDelete(subscription.id);
 
   host.isSubscriber = false;
   host.subscription = null;
 
   await host.save({ validateBeforeSave: false });
-  console.log(event);
 };
 
 exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
