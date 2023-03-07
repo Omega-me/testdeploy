@@ -183,33 +183,37 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
     return res.status(CONST.BAD_REQUEST).send(`Webhook Error: ${err.message}`);
   }
 
-  switch (event.type) {
-    case 'checkout.session.async_payment_failed':
-      const checkoutSessionAsyncPaymentFailed = event.data.object;
-      console.log(
-        'checkoutSessionAsyncPaymentFailed',
-        checkoutSessionAsyncPaymentFailed
-      );
-      break;
-    case 'checkout.session.async_payment_succeeded':
-      const checkoutSessionAsyncPaymentSucceeded = event.data.object;
-      console.log(
-        'checkoutSessionAsyncPaymentSucceeded',
-        checkoutSessionAsyncPaymentSucceeded
-      );
-      break;
-    case 'checkout.session.completed':
-      const checkoutSessionCompleted = event.data.object;
-      await createSubscriptionBooking(req, res);
-      console.log('checkoutSessionCompleted', checkoutSessionCompleted);
-      break;
-    case 'checkout.session.expired':
-      const checkoutSessionExpired = event.data.object;
-      console.log('checkoutSessionExpired', checkoutSessionExpired);
-      break;
-    default:
-      console.log(`Unhandled event type ${event.type}`);
+  if (event.type === 'checkout.session.completed') {
+    createSubscriptionBooking(req, res);
   }
+
+  // switch (event.type) {
+  //   case 'checkout.session.async_payment_failed':
+  //     const checkoutSessionAsyncPaymentFailed = event.data.object;
+  //     console.log(
+  //       'checkoutSessionAsyncPaymentFailed',
+  //       checkoutSessionAsyncPaymentFailed
+  //     );
+  //     break;
+  //   case 'checkout.session.async_payment_succeeded':
+  //     const checkoutSessionAsyncPaymentSucceeded = event.data.object;
+  //     console.log(
+  //       'checkoutSessionAsyncPaymentSucceeded',
+  //       checkoutSessionAsyncPaymentSucceeded
+  //     );
+  //     break;
+  //   case 'checkout.session.completed':
+  //     const checkoutSessionCompleted = event.data.object;
+  //     await createSubscriptionBooking(req, res);
+  //     console.log('checkoutSessionCompleted', checkoutSessionCompleted);
+  //     break;
+  //   case 'checkout.session.expired':
+  //     const checkoutSessionExpired = event.data.object;
+  //     console.log('checkoutSessionExpired', checkoutSessionExpired);
+  //     break;
+  //   default:
+  //     console.log(`Unhandled event type ${event.type}`);
+  // }
 
   res.status(CONST.OK).json({
     recieved: true,
