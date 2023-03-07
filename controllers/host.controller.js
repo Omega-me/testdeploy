@@ -195,72 +195,9 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
 });
 // Temporary
 exports.createSubscriptionBooking = catchAsync(async (req, res, next) => {
-  // TODO: Do not recreate the subscription booking if the booking already exists
-  // TODO: it should not work if user has not paid the plan because it causes propgramming errors of undefined (it will be fixed using webhooks paid event)
-
-  const host = await Host.find({
-    email: 'olkenmerxira@gmail.com',
-  });
-
-  const subscription = await stripe.subscriptions.retrieve(
-    'sub_1MixSMJDXaCUWKYcKYw7WAAp'
-  );
-
-  let defaultPayment;
-  if (subscription) {
-    defaultPayment = await stripe.paymentMethods.retrieve(
-      subscription.default_payment_method
-    );
-  }
-
-  const subscriptionBookingData = {
-    subscriptionId: subscription.id,
-    subscriptionPlanId: subscription.plan.id,
-    subscriptionStatus: subscription.status,
-    priceAmount: subscription.plan.amount / 100,
-    currency: subscription.plan.currency,
-    productId: subscription.plan.product,
-    customerId: subscription.customer,
-    userId: host[0]._id,
-    customerRole: host[0].role,
-    latestInvoiceId: subscription.latest_invoice,
-    email: defaultPayment.billing_details.email,
-    name: defaultPayment.billing_details.name,
-    brand: defaultPayment.card.brand,
-    country: defaultPayment.card.country,
-    expMonth: defaultPayment.card.exp_month,
-    expYear: defaultPayment.card.exp_year,
-    funding: defaultPayment.card.funding,
-    last4: defaultPayment.card.last4,
-    created: new Date(defaultPayment.created * 1000),
-    type: defaultPayment.type,
-    oneTimeSubscription: false,
-    startedAt: new Date(subscription.current_period_start * 1000),
-    endsAt: new Date(subscription.current_period_end * 1000),
-  };
-
-  // // Create a subscription booking
-  // const foundedSubsciptionBooking = await Subscription.find({
-  //   userId: req.user._id,
-  // });
-
-  // if (foundedSubsciptionBooking.length > 0) {
-  //   await Subscription.findByIdAndDelete(foundedSubsciptionBooking[0]._id);
-  // }
-
-  // const subscriptionBooking = await Subscription.create(
-  //   subscriptionBookingData
-  // );
-
-  // // update host
-  // host.isSubscriber = true;
-  // host.subscription = subscriptionBooking._id;
-  // await host.save({ validateBeforeSave: false });
-
+  // TODO: it should not work if user has not paid the plan because it causes propgramming errors of undefined (it will be fixed
   res.json({
-    // subscription,
-    // defaultPayment,
-    subscriptionBookingData,
+    test: 'test',
   });
 });
 
