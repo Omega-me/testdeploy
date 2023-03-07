@@ -161,8 +161,8 @@ const createSubscriptionBookingProd = async (event) => {
   );
 
   // update host
-  host.isSubscriber = true;
-  host.subscription = subscriptionBooking._id;
+  host[0].isSubscriber = true;
+  host[0].subscription = subscriptionBooking._id;
   await host.save({ validateBeforeSave: false });
 };
 
