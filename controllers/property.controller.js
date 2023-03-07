@@ -34,9 +34,6 @@ exports.uploadPropertyImages = upload.fields([
   { name: 'images', minCount: 4, maxCount: 10 },
 ]);
 
-// upload.single('image') req.file
-// upload.array('images', 5) req.files
-
 exports.resizePropertyImages = catchAsync(async (req, res, next) => {
   if (!req.files.imageCover || !req.files.images) return next();
 
@@ -164,19 +161,32 @@ exports.findTop2Groups = catchAsync(async (req, res, next) => {
 
 exports.create = handlerFactory.createOne(Property);
 exports.getAll = handlerFactory.getAll(Property);
-exports.getOne = handlerFactory.getOne(Property, [
-  'host',
-  'booking',
-  'reviews',
-  {
-    path: 'reviews',
-    populate: {
-      path: 'nurse',
-      model: 'Nurse',
-      select: ['displayName', 'profilPicture'],
+exports.getOne = handlerFactory.getOne(Property, {
+  populate: [
+    {
+      path: 'host',
+      select: [
+        '-stripeAccountId',
+        '-stripeCustomerId',
+        '-passwordResetToken',
+        '-verificationToken',
+        '-passwordChangetAt',
+        '-passwordResetExpires',
+        '-refreshToken',
+      ],
     },
-  },
-]);
+    'booking',
+    'reviews',
+    {
+      path: 'reviews',
+      populate: {
+        path: 'nurse',
+        model: 'Nurse',
+        select: ['displayName', 'profilPicture'],
+      },
+    },
+  ],
+});
 exports.updateOne = handlerFactory.updateOne(Property);
 exports.deleteOne = handlerFactory.deleteOne(Property);
 exports.filter = handlerFactory.filter(Property);

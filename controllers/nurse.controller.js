@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+/* eslint-disable no-case-declarations */
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const handlerFactory = require('../common/midlewares/handlerFactory');
 const SubscriptionPricing = require('../models/subscriptionsPricing.model');
@@ -121,18 +123,39 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
     event = stripe.webhooks.constructEvent(
       req.body,
       sig,
-      process.env.STRIPE_SUBSCRIPTION_WEBHOOK_WECRET
+      process.env.STRIPE_NURSE_SUBSCRIPTION_WEBHOOK_SECRET
     );
   } catch (err) {
     return res.status(CONST.BAD_REQUEST).send(`Webhook Error: ${err.message}`);
   }
 
-  // Handle the event
-  // eslint-disable-next-line no-console
-  console.log(event);
-  // create the booking record after getting the webhook event
+  switch (event.type) {
+    case 'checkout.session.async_payment_failed':
+      const checkoutSessionAsyncPaymentFailed = event.data.object;
+      console.log(
+        'checkoutSessionAsyncPaymentFailed',
+        checkoutSessionAsyncPaymentFailed
+      );
+      break;
+    case 'checkout.session.async_payment_succeeded':
+      const checkoutSessionAsyncPaymentSucceeded = event.data.object;
+      console.log(
+        'checkoutSessionAsyncPaymentSucceeded',
+        checkoutSessionAsyncPaymentSucceeded
+      );
+      break;
+    case 'checkout.session.completed':
+      const checkoutSessionCompleted = event.data.object;
+      console.log('checkoutSessionCompleted', checkoutSessionCompleted);
+      break;
+    case 'checkout.session.expired':
+      const checkoutSessionExpired = event.data.object;
+      console.log('checkoutSessionExpired', checkoutSessionExpired);
+      break;
+    default:
+      console.log(`Unhandled event type ${event.type}`);
+  }
 
-  // Return a 200 res to acknowledge receipt of the event
   res.status(CONST.OK).json({
     recieved: true,
   });
@@ -224,12 +247,57 @@ exports.createSubscriptionBooking = catchAsync(async (req, res, next) => {
 });
 // TODO: Create a function that deletes the booking for the database when the user cancel the subscription
 
-exports.create = handlerFactory.createOne(Nurse);
-exports.getAll = handlerFactory.getAll(Nurse);
-exports.getOne = handlerFactory.getOne(Nurse, [
-  'reviews',
-  'subscription',
-  // 'payments',
-]); // TODO: fix  payments
-exports.updateOne = handlerFactory.updateOne(Nurse);
+exports.create = handlerFactory.createOne(Nurse, [
+  '-stripeAccountId',
+  '-stripeCustomerId',
+  '-passwordResetToken',
+  '-verificationToken',
+  '-passwordChangetAt',
+  '-passwordResetExpires',
+  '-refreshToken',
+]);
+exports.getAll = handlerFactory.getAll(Nurse, {
+  select: [
+    '-stripeAccountId',
+    '-stripeCustomerId',
+    '-passwordResetToken',
+    '-verificationToken',
+    '-passwordChangetAt',
+    '-passwordResetExpires',
+    '-refreshToken',
+  ],
+});
+exports.getOne = handlerFactory.getOne(Nurse, {
+  populate: [
+    'reviews',
+    {
+      path: 'subscription',
+      select: [
+        '-subscriptionId',
+        '-subscriptionPlanId',
+        '-productId',
+        '-customerId',
+      ],
+    },
+    // 'payments',
+  ],
+  select: [
+    '-stripeAccountId',
+    '-stripeCustomerId',
+    '-passwordResetToken',
+    '-verificationToken',
+    '-passwordChangetAt',
+    '-passwordResetExpires',
+    '-refreshToken',
+  ],
+}); // TODO: fix  payments
+exports.updateOne = handlerFactory.updateOne(Nurse, [
+  '-stripeAccountId',
+  '-stripeCustomerId',
+  '-passwordResetToken',
+  '-verificationToken',
+  '-passwordChangetAt',
+  '-passwordResetExpires',
+  '-refreshToken',
+]);
 exports.deleteOne = handlerFactory.deleteOne(Nurse);

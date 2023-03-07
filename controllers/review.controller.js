@@ -20,7 +20,21 @@ exports.checkPropertyExistance = catchAsync(async (req, _, next) => {
 
 exports.create = handlerFactory.createOne(Review);
 exports.getAll = handlerFactory.getAll(Review);
-exports.getOne = handlerFactory.getOne(Review, ['nurse', 'property']);
+exports.getOne = handlerFactory.getOne(Review, {
+  populate: [
+    {
+      path: 'nurse',
+      select: [
+        '-stripeAccountId',
+        '-stripeCustomerId',
+        '-passwordResetExpires',
+        '-passwordResetToken',
+        '-refreshToken',
+      ],
+    },
+    'property',
+  ],
+});
 exports.updateOne = handlerFactory.updateOne(Review);
 exports.deleteOne = handlerFactory.deleteOne(Review);
 exports.filter = handlerFactory.filter(Review);

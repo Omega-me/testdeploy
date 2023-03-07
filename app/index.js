@@ -29,6 +29,7 @@ const subscriptionPricingRouter = require('../routes/subscriptionPricing.routes'
 
 // webhooks controllers
 const hostController = require('../controllers/host.controller');
+const nurseController = require('../controllers/nurse.controller');
 
 // init app
 const app = express();
@@ -51,6 +52,11 @@ app.use(
   '/host/subscribe-webhook',
   express.raw({ type: 'application/json' }),
   hostController.listendToSubscriptionWebhook
+);
+app.use(
+  '/nurse/subscribe-webhook',
+  express.raw({ type: 'application/json' }),
+  nurseController.listendToSubscriptionWebhook
 );
 app.use(express.json());
 app.use(cookieParser());

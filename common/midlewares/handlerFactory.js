@@ -12,7 +12,6 @@ const catchAsync = require('../utils/catchAsync');
 exports.deleteOne = (Model) =>
   catchAsync(async (req, res, next) => {
     const { id } = req.params;
-    // checkId(id, next);
 
     const doc = await Model.findByIdAndDelete(id);
 
@@ -29,14 +28,14 @@ exports.deleteOne = (Model) =>
 /**
  *
  * @param {*} Model
+ * @param {*} select
  * @returns
  */
-exports.updateOne = (Model) =>
+exports.updateOne = (Model, select) =>
   catchAsync(async (req, res, next) => {
     const { id } = req.params;
-    // checkId(id, next);
 
-    const doc = await Model.findByIdAndUpdate(id, req.body, {
+    let doc = await Model.findByIdAndUpdate(id, req.body, {
       new: true,
       runValidators: true,
     });
@@ -44,6 +43,8 @@ exports.updateOne = (Model) =>
     if (!doc) {
       return next(new AppError(LABELS.NO_DOC_FOUND, CONST.NOT_FOUND));
     }
+
+    if (select) doc = doc.select(select);
 
     res.status(CONST.OK).json({
       status: CONST.SUCCESS,
@@ -54,11 +55,13 @@ exports.updateOne = (Model) =>
 /**
  *
  * @param {*} Model
+ * @param {*} select
  * @returns
  */
-exports.createOne = (Model) =>
+exports.createOne = (Model, select) =>
   catchAsync(async (req, res, next) => {
-    const doc = await Model.create(req.body);
+    let doc = await Model.create(req.body);
+    if (select) doc = doc.select(select);
 
     res.status(CONST.CREATED).json({
       status: CONST.SUCCESS,
@@ -69,15 +72,18 @@ exports.createOne = (Model) =>
 /**
  *
  * @param {*} Model
- * @param {*} popOptions
+ * @param {*} options
  * @returns
  */
-exports.getOne = (Model, popOptions) =>
+exports.getOne = (Model, options) =>
   catchAsync(async (req, res, next) => {
     const { id } = req.params;
 
     let query = Model.findById(id);
-    if (popOptions) query = query.populate(popOptions);
+    if (options) {
+      if (options.populate) query = query.populate(options.populate);
+      if (options.select) query = query.select(options.select);
+    }
     const doc = await query;
 
     if (!doc) {
@@ -93,14 +99,17 @@ exports.getOne = (Model, popOptions) =>
 /**
  *
  * @param {*} Model
- * @param {*} popOptions
+ * @param {*} options
  * @returns
  */
-exports.getAll = (Model, popOptions) =>
+exports.getAll = (Model, options) =>
   catchAsync(async (req, res, next) => {
     const data = await Model.find();
     let queryData = Model.find();
-    if (popOptions) queryData = queryData.populate(popOptions);
+    if (options) {
+      if (options.populate) queryData = queryData.populate(options.populate);
+      if (options.select) queryData = queryData.select(options.select);
+    }
     const features = new ApiFeatures(queryData, req.query)
       .populate()
       .filter()
@@ -122,13 +131,16 @@ exports.getAll = (Model, popOptions) =>
 /**
  *
  * @param {*} Model
- * @param {*} popOptions
+ * @param {*} options
  * @returns
  */
-exports.filter = (Model, popOptions) =>
+exports.filter = (Model, options) =>
   catchAsync(async (req, res, next) => {
     let queryData = Model.find();
-    if (popOptions) queryData = queryData.populate(popOptions);
+    if (options) {
+      if (options.populate) queryData = queryData.populate(options.populate);
+      if (options.select) queryData = queryData.select(options.select);
+    }
     const features = new ApiFeatures(queryData, req.body)
       .advancedFilter()
       .populate();
