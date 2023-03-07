@@ -105,13 +105,13 @@ exports.createSubCheckoutSession = catchAsync(async (req, res, next) => {
   });
 });
 
-const createSubscriptionBookingProd = async (session) => {
+const createSubscriptionBookingProd = async (event) => {
   const host = await Host.find({
-    email: session.data.object.customer_details.email,
+    email: event.data.object.customer_details.email,
   });
 
   const subscription = await stripe.subscriptions.retrieve(
-    session.data.object.subscription
+    event.data.object.subscription
   );
 
   let defaultPayment;
@@ -182,7 +182,7 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
   }
 
   if (event.type === 'checkout.session.completed') {
-    createSubscriptionBookingProd(req);
+    createSubscriptionBookingProd(event);
   }
 
   res.status(CONST.OK).json({
