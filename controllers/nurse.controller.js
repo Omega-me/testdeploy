@@ -114,6 +114,79 @@ exports.createSubCheckoutSession = catchAsync(async (req, res, next) => {
   });
 });
 
+const createSubscriptionBookingProd = async (event) => {
+  const nurses = await Nurse.findById({
+    email: event.data.object.customer_details.email,
+  });
+  const nurse = nurses[0];
+
+  const subscriptionPricing = await SubscriptionPricing.find({
+    userRole: 'Nurse',
+  });
+
+  const charges = await stripe.charges.list({
+    customer: nurse.stripeCustomerId,
+    limit: 1,
+  });
+  let charge;
+  if (charges.data[0]) {
+    charge = charges.data[0];
+  }
+
+  let defaultPayment;
+  if (charge) {
+    defaultPayment = await stripe.paymentMethods.retrieve(
+      charge.payment_method
+    );
+  }
+
+  const plan = await stripe.plans.retrieve(subscriptionPricing[0].stripePlanId);
+
+  const subscriptionBookingData = {
+    subscriptionId: charge.id,
+    subscriptionproductId: plan.id,
+    subscriptionStatus: 'active',
+    priceAmount: charge.amount / 100,
+    currency: charge.currency,
+    productId: plan.product,
+    customerId: charge.customer,
+    userId: nurse._id,
+    customerRole: nurse.role,
+    latestInvoiceId: charge.invoice,
+    email: defaultPayment.billing_details.email,
+    name: defaultPayment.billing_details.name,
+    brand: defaultPayment.card.brand,
+    country: defaultPayment.card.country,
+    expMonth: defaultPayment.card.exp_month,
+    expYear: defaultPayment.card.exp_year,
+    funding: defaultPayment.card.funding,
+    last4: defaultPayment.card.last4,
+    created: new Date(defaultPayment.created * 1000),
+    type: defaultPayment.type,
+    oneTimeSubscription: true,
+    startedAt: new Date(charge.created * 1000),
+    endsAt: new Date('9999-12-31T23:59:59'),
+  };
+
+  // Create a subscription booking
+  const foundedSubsciptionBooking = await Subscription.find({
+    userId: nurse._id,
+  });
+
+  if (foundedSubsciptionBooking.length > 0) {
+    await Subscription.findByIdAndDelete(foundedSubsciptionBooking[0]._id);
+  }
+
+  const subscriptionBooking = await Subscription.create(
+    subscriptionBookingData
+  );
+
+  // update user and make it subscriber
+  nurse.isSubscriber = true;
+  nurse.subscription = subscriptionBooking._id;
+  await nurse.save({ validateBeforeSave: false });
+};
+
 exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
   const sig = req.headers['stripe-signature'];
 
@@ -129,37 +202,16 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
     return res.status(CONST.BAD_REQUEST).send(`Webhook Error: ${err.message}`);
   }
 
-  switch (event.type) {
-    case 'checkout.session.async_payment_failed':
-      const checkoutSessionAsyncPaymentFailed = event.data.object;
-      console.log(
-        'checkoutSessionAsyncPaymentFailed',
-        checkoutSessionAsyncPaymentFailed
-      );
-      break;
-    case 'checkout.session.async_payment_succeeded':
-      const checkoutSessionAsyncPaymentSucceeded = event.data.object;
-      console.log(
-        'checkoutSessionAsyncPaymentSucceeded',
-        checkoutSessionAsyncPaymentSucceeded
-      );
-      break;
-    case 'checkout.session.completed':
-      const checkoutSessionCompleted = event.data.object;
-      console.log('checkoutSessionCompleted', checkoutSessionCompleted);
-      break;
-    case 'checkout.session.expired':
-      const checkoutSessionExpired = event.data.object;
-      console.log('checkoutSessionExpired', checkoutSessionExpired);
-      break;
-    default:
-      console.log(`Unhandled event type ${event.type}`);
+  if (event.type === 'checkout.session.completed') {
+    createSubscriptionBookingProd(event);
   }
 
   res.status(CONST.OK).json({
     recieved: true,
+    event,
   });
 });
+
 // Temporary
 exports.createSubscriptionBooking = catchAsync(async (req, res, next) => {
   // TODO: Do not recreate the subscription booking if the booking already exists

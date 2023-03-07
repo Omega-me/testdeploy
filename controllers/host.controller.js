@@ -111,8 +111,6 @@ const createSubscriptionBookingProd = async (event) => {
   });
   const host = hosts[0];
 
-  console.log(host);
-
   const subscription = await stripe.subscriptions.retrieve(
     event.data.object.subscription
   );
@@ -190,7 +188,6 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
 
   res.status(CONST.OK).json({
     recieved: true,
-    event,
   });
 });
 // Temporary
