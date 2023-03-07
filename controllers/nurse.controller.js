@@ -146,7 +146,7 @@ const createSubscriptionBookingProd = async (event) => {
     subscriptionId: charge.id,
     subscriptionproductId: plan.id,
     subscriptionStatus: 'active',
-    priceAmount: charge.amount / 100,
+    priceAmount: charge.amount,
     currency: charge.currency,
     productId: plan.product,
     customerId: charge.customer,
@@ -168,7 +168,7 @@ const createSubscriptionBookingProd = async (event) => {
     endsAt: new Date('9999-12-31T23:59:59'),
   };
 
-  // Create a subscription booking
+  // // Create a subscription booking
   const foundedSubsciptionBooking = await Subscription.find({
     userId: nurse._id,
   });
@@ -214,25 +214,18 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
 
 // Temporary
 exports.createSubscriptionBooking = catchAsync(async (req, res, next) => {
-  // TODO: Do not recreate the subscription booking if the booking already exists
-  // TODO: Update the user and make it subscriber and dont allow the user anymore to use this route if he has payed one time
-  const nurse = await Nurse.findById(req.user._id);
-  if (!nurse) {
-    return next(new AppError('This user does not exists.', CONST.BAD_REQUEST));
-  }
-  if (nurse.isSubscriber || req.user.isSubscriber) {
-    return next(new AppError('This user is a subscriber.', CONST.FORBIDDEN));
-  }
-  if (!nurse.stripeCustomerId || !req.user.stripeCustomerId) {
-    return next(new AppError('This user is not valid.', CONST.FORBIDDEN));
-  }
+  const nurses = await Nurse.find({
+    email: 'olkentestsub@gmail.com',
+  });
+
+  const nurse = nurses[0];
 
   const subscriptionPricing = await SubscriptionPricing.find({
     userRole: 'Nurse',
   });
 
   const charges = await stripe.charges.list({
-    customer: req.user.stripeCustomerId,
+    customer: nurse.stripeCustomerId,
     limit: 1,
   });
   let charge;
@@ -257,8 +250,8 @@ exports.createSubscriptionBooking = catchAsync(async (req, res, next) => {
     currency: charge.currency,
     productId: plan.product,
     customerId: charge.customer,
-    userId: req.user._id,
-    customerRole: req.user.role,
+    userId: nurse._id,
+    customerRole: nurse.role,
     latestInvoiceId: charge.invoice,
     email: defaultPayment.billing_details.email,
     name: defaultPayment.billing_details.name,
@@ -275,9 +268,9 @@ exports.createSubscriptionBooking = catchAsync(async (req, res, next) => {
     endsAt: new Date('9999-12-31T23:59:59'),
   };
 
-  // Create a subscription booking
+  // // Create a subscription booking
   const foundedSubsciptionBooking = await Subscription.find({
-    userId: req.user._id,
+    userId: nurse._id,
   });
 
   if (foundedSubsciptionBooking.length > 0) {
@@ -294,7 +287,9 @@ exports.createSubscriptionBooking = catchAsync(async (req, res, next) => {
   await nurse.save({ validateBeforeSave: false });
 
   res.json({
-    subscriptionBooking,
+    // subscriptionBooking,
+    // nurse,
+    subscriptionBookingData,
   });
 });
 // TODO: Create a function that deletes the booking for the database when the user cancel the subscription
