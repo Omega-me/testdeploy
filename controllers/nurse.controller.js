@@ -208,19 +208,10 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
 
   res.status(CONST.OK).json({
     recieved: true,
-    event,
   });
 });
 
-// Temporary
-exports.createSubscriptionBooking = catchAsync(async (req, res, next) => {
-  res.json({
-    teste: 'test',
-  });
-});
-// TODO: Create a function that deletes the booking for the database when the user cancel the subscription
-
-exports.create = handlerFactory.createOne(Nurse, [
+const nurseSelectedFields = [
   '-stripeAccountId',
   '-stripeCustomerId',
   '-passwordResetToken',
@@ -228,17 +219,10 @@ exports.create = handlerFactory.createOne(Nurse, [
   '-passwordChangetAt',
   '-passwordResetExpires',
   '-refreshToken',
-]);
+];
+exports.create = handlerFactory.createOne(Nurse, nurseSelectedFields);
 exports.getAll = handlerFactory.getAll(Nurse, {
-  select: [
-    '-stripeAccountId',
-    '-stripeCustomerId',
-    '-passwordResetToken',
-    '-verificationToken',
-    '-passwordChangetAt',
-    '-passwordResetExpires',
-    '-refreshToken',
-  ],
+  select: nurseSelectedFields,
 });
 exports.getOne = handlerFactory.getOne(Nurse, {
   populate: [
@@ -252,25 +236,8 @@ exports.getOne = handlerFactory.getOne(Nurse, {
         '-customerId',
       ],
     },
-    // 'payments',
   ],
-  select: [
-    '-stripeAccountId',
-    '-stripeCustomerId',
-    '-passwordResetToken',
-    '-verificationToken',
-    '-passwordChangetAt',
-    '-passwordResetExpires',
-    '-refreshToken',
-  ],
-}); // TODO: fix  payments
-exports.updateOne = handlerFactory.updateOne(Nurse, [
-  '-stripeAccountId',
-  '-stripeCustomerId',
-  '-passwordResetToken',
-  '-verificationToken',
-  '-passwordChangetAt',
-  '-passwordResetExpires',
-  '-refreshToken',
-]);
+  select: nurseSelectedFields,
+});
+exports.updateOne = handlerFactory.updateOne(Nurse, nurseSelectedFields);
 exports.deleteOne = handlerFactory.deleteOne(Nurse);

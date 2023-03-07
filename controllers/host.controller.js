@@ -198,9 +198,9 @@ exports.createSubscriptionBooking = catchAsync(async (req, res, next) => {
   });
 });
 
-// TODO: Create a function that deletes the booking for mthe database when the user cancel the subscription
+// TODO: Create a function that deletes the booking form the database when the user cancel the subscription and changes the user status to a non subscriber
 
-exports.create = handlerFactory.createOne(Host, [
+const hostSelectedFields = [
   '-stripeAccountId',
   '-stripeCustomerId',
   '-passwordResetToken',
@@ -208,17 +208,10 @@ exports.create = handlerFactory.createOne(Host, [
   '-passwordChangetAt',
   '-passwordResetExpires',
   '-refreshToken',
-]);
+];
+exports.create = handlerFactory.createOne(Host, hostSelectedFields);
 exports.getAll = handlerFactory.getAll(Host, {
-  select: [
-    '-stripeAccountId',
-    '-stripeCustomerId',
-    '-passwordResetToken',
-    '-verificationToken',
-    '-passwordChangetAt',
-    '-passwordResetExpires',
-    '-refreshToken',
-  ],
+  select: hostSelectedFields,
 });
 exports.getOne = handlerFactory.getOne(Host, {
   populate: [
@@ -233,23 +226,7 @@ exports.getOne = handlerFactory.getOne(Host, {
       ],
     },
   ],
-  select: [
-    '-stripeAccountId',
-    '-stripeCustomerId',
-    '-passwordResetToken',
-    '-verificationToken',
-    '-passwordChangetAt',
-    '-passwordResetExpires',
-    '-refreshToken',
-  ],
+  select: hostSelectedFields,
 });
-exports.updateOne = handlerFactory.updateOne(Host, [
-  '-stripeAccountId',
-  '-stripeCustomerId',
-  '-passwordResetToken',
-  '-verificationToken',
-  '-passwordChangetAt',
-  '-passwordResetExpires',
-  '-refreshToken',
-]);
+exports.updateOne = handlerFactory.updateOne(Host, hostSelectedFields);
 exports.deleteOne = handlerFactory.deleteOne(Host);

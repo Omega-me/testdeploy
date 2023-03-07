@@ -95,20 +95,6 @@ router.get(
   nurseController.createSubCheckoutSession
 );
 
-router.get(
-  `${CONST.CREATE_SUBSCRIPTION_BOOKING}`,
-  checkLoginType,
-  conditional(
-    function (req, res, next) {
-      return req.role === CONST.NURSE_ROLE;
-    },
-    nurseAuth.protect,
-    hostAuth.protect
-  ),
-  restrictTo(CONST.NURSE_ROLE),
-  nurseController.createSubscriptionBooking
-);
-
 router.route('/').get(nurseController.getAll);
 // .post(nurseController.create);
 router.route('/:id').get(nurseController.getOne);
