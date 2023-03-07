@@ -172,6 +172,7 @@ const deleteSubscriptionBooking = async (event) => {
     subscriptionId: event.data.object.id,
   });
   const subscription = subscriptions[0];
+
   const host = await Host.findById(subscription.userId);
 
   await Subscription.findByIdAndDelete(subscription.id);
@@ -210,7 +211,6 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
       break;
     case 'customer.subscription.deleted':
       console.log('susbcripton deleted');
-      console.log(event.data.object);
       deleteSubscriptionBooking(event);
       break;
     case 'customer.subscription.paused':
@@ -228,13 +228,6 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
 
   res.status(CONST.OK).json({
     recieved: true,
-  });
-});
-
-// Temporary
-exports.developmentTestingMethode = catchAsync(async (req, res, next) => {
-  res.json({
-    test: 'test',
   });
 });
 
