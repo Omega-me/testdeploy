@@ -244,15 +244,14 @@ exports.cancelSubscription = catchAsync(async (req, res, next) => {
       new AppError('This user is not a subscriber.', CONST.FORBIDDEN)
     );
   }
-
-  await stripe.subscriptions.del(req.user.subscription);
+  const susbcription = await Subscription.findById(req.user.subscription);
+  await stripe.subscriptions.del(susbcription.subscriptionId);
 
   res.status(CONST.OK).json({
     status: CONST.SUCCESS,
     message: 'You are no longer a subscriber.',
   });
 });
-// TODO: Create a function that deletes the booking form the database when the user cancel the subscription and changes the user status to a non subscriber
 
 const hostSelectedFields = [
   '-stripeAccountId',
