@@ -125,7 +125,7 @@ const createSubscriptionBookingProd = async (event) => {
     subscriptionId: subscription.id,
     subscriptionPlanId: subscription.plan.id,
     subscriptionStatus: subscription.status,
-    priceAmount: subscription.plan.amount,
+    priceAmount: subscription.plan.amount / 100,
     currency: subscription.plan.currency,
     productId: subscription.plan.product,
     customerId: subscription.customer,
