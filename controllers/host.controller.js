@@ -213,6 +213,7 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
 
   res.status(CONST.OK).json({
     recieved: true,
+    event,
   });
 });
 // Temporary
