@@ -105,16 +105,14 @@ exports.createSubCheckoutSession = catchAsync(async (req, res, next) => {
   });
 });
 
-const createSubscriptionBooking = async (req, res) => {
-  const host = await Host.findById(req.user._id);
-  const subscriptions = await stripe.subscriptions.list({
-    customer: req.user.stripeCustomerId,
-    limit: 1,
+const createSubscriptionBookingProd = async (session) => {
+  const host = await Host.find({
+    email: session.data.object.customer_details.email,
   });
-  let subscription;
-  if (subscriptions.data[0]) {
-    subscription = subscriptions.data[0];
-  }
+
+  const subscription = await stripe.subscriptions.retrieve(
+    session.data.object.subscription
+  );
 
   let defaultPayment;
   if (subscription) {
@@ -131,8 +129,8 @@ const createSubscriptionBooking = async (req, res) => {
     currency: subscription.plan.currency,
     productId: subscription.plan.product,
     customerId: subscription.customer,
-    userId: req.user._id,
-    customerRole: req.user.role,
+    userId: host[0]._id,
+    customerRole: host[0].role,
     latestInvoiceId: subscription.latest_invoice,
     email: defaultPayment.billing_details.email,
     name: defaultPayment.billing_details.name,
@@ -151,7 +149,7 @@ const createSubscriptionBooking = async (req, res) => {
 
   // Create a subscription booking
   const foundedSubsciptionBooking = await Subscription.find({
-    userId: req.user._id,
+    userId: host[0]._id,
   });
 
   if (foundedSubsciptionBooking.length > 0) {
@@ -184,36 +182,8 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
   }
 
   if (event.type === 'checkout.session.completed') {
-    createSubscriptionBooking(req, res);
+    createSubscriptionBookingProd(req);
   }
-
-  // switch (event.type) {
-  //   case 'checkout.session.async_payment_failed':
-  //     const checkoutSessionAsyncPaymentFailed = event.data.object;
-  //     console.log(
-  //       'checkoutSessionAsyncPaymentFailed',
-  //       checkoutSessionAsyncPaymentFailed
-  //     );
-  //     break;
-  //   case 'checkout.session.async_payment_succeeded':
-  //     const checkoutSessionAsyncPaymentSucceeded = event.data.object;
-  //     console.log(
-  //       'checkoutSessionAsyncPaymentSucceeded',
-  //       checkoutSessionAsyncPaymentSucceeded
-  //     );
-  //     break;
-  //   case 'checkout.session.completed':
-  //     const checkoutSessionCompleted = event.data.object;
-  //     await createSubscriptionBooking(req, res);
-  //     console.log('checkoutSessionCompleted', checkoutSessionCompleted);
-  //     break;
-  //   case 'checkout.session.expired':
-  //     const checkoutSessionExpired = event.data.object;
-  //     console.log('checkoutSessionExpired', checkoutSessionExpired);
-  //     break;
-  //   default:
-  //     console.log(`Unhandled event type ${event.type}`);
-  // }
 
   res.status(CONST.OK).json({
     recieved: true,
@@ -221,84 +191,75 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
   });
 });
 // Temporary
-// exports.createSubscriptionBooking = catchAsync(async (req, res, next) => {
-//   // TODO: Do not recreate the subscription booking if the booking already exists
-//   // TODO: it should not work if user has not paid the plan because it causes propgramming errors of undefined (it will be fixed using webhooks paid event)
-//   const host = await Host.findById(req.user._id);
-//   if (!host) {
-//     return next(new AppError('User does not exist.', CONST.FORBIDDEN));
-//   }
-//   if (host.isSubscriber || req.user.isSubscriber) {
-//     return next(new AppError('This user is a subscriber.', CONST.FORBIDDEN));
-//   }
-//   if (!host.customerId || !req.user.stripeCustomerId) {
-//     return next(new AppError('This user is not valid.', CONST.FORBIDDEN));
-//   }
+exports.createSubscriptionBooking = catchAsync(async (req, res, next) => {
+  // TODO: Do not recreate the subscription booking if the booking already exists
+  // TODO: it should not work if user has not paid the plan because it causes propgramming errors of undefined (it will be fixed using webhooks paid event)
 
-//   const subscriptions = await stripe.subscriptions.list({
-//     customer: req.user.stripeCustomerId,
-//     limit: 1,
-//   });
-//   let subscription;
-//   if (subscriptions.data[0]) {
-//     subscription = subscriptions.data[0];
-//   }
+  const host = await Host.find({
+    email: 'olkenmerxira@gmail.com',
+  });
 
-//   let defaultPayment;
-//   if (subscription) {
-//     defaultPayment = await stripe.paymentMethods.retrieve(
-//       subscription.default_payment_method
-//     );
-//   }
+  const subscription = await stripe.subscriptions.retrieve(
+    'sub_1MixSMJDXaCUWKYcKYw7WAAp'
+  );
 
-//   const subscriptionBookingData = {
-//     subscriptionId: subscription.id,
-//     subscriptionPlanId: subscription.plan.id,
-//     subscriptionStatus: subscription.status,
-//     priceAmount: subscription.plan.amount,
-//     currency: subscription.plan.currency,
-//     productId: subscription.plan.product,
-//     customerId: subscription.customer,
-//     userId: req.user._id,
-//     customerRole: req.user.role,
-//     latestInvoiceId: subscription.latest_invoice,
-//     email: defaultPayment.billing_details.email,
-//     name: defaultPayment.billing_details.name,
-//     brand: defaultPayment.card.brand,
-//     country: defaultPayment.card.country,
-//     expMonth: defaultPayment.card.exp_month,
-//     expYear: defaultPayment.card.exp_year,
-//     funding: defaultPayment.card.funding,
-//     last4: defaultPayment.card.last4,
-//     created: new Date(defaultPayment.created * 1000),
-//     type: defaultPayment.type,
-//     oneTimeSubscription: false,
-//     startedAt: new Date(subscription.current_period_start * 1000),
-//     endsAt: new Date(subscription.current_period_end * 1000),
-//   };
+  let defaultPayment;
+  if (subscription) {
+    defaultPayment = await stripe.paymentMethods.retrieve(
+      subscription.default_payment_method
+    );
+  }
 
-//   // Create a subscription booking
-//   const foundedSubsciptionBooking = await Subscription.find({
-//     userId: req.user._id,
-//   });
+  const subscriptionBookingData = {
+    subscriptionId: subscription.id,
+    subscriptionPlanId: subscription.plan.id,
+    subscriptionStatus: subscription.status,
+    priceAmount: subscription.plan.amount / 100,
+    currency: subscription.plan.currency,
+    productId: subscription.plan.product,
+    customerId: subscription.customer,
+    userId: host[0]._id,
+    customerRole: host[0].role,
+    latestInvoiceId: subscription.latest_invoice,
+    email: defaultPayment.billing_details.email,
+    name: defaultPayment.billing_details.name,
+    brand: defaultPayment.card.brand,
+    country: defaultPayment.card.country,
+    expMonth: defaultPayment.card.exp_month,
+    expYear: defaultPayment.card.exp_year,
+    funding: defaultPayment.card.funding,
+    last4: defaultPayment.card.last4,
+    created: new Date(defaultPayment.created * 1000),
+    type: defaultPayment.type,
+    oneTimeSubscription: false,
+    startedAt: new Date(subscription.current_period_start * 1000),
+    endsAt: new Date(subscription.current_period_end * 1000),
+  };
 
-//   if (foundedSubsciptionBooking.length > 0) {
-//     await Subscription.findByIdAndDelete(foundedSubsciptionBooking[0]._id);
-//   }
+  // // Create a subscription booking
+  // const foundedSubsciptionBooking = await Subscription.find({
+  //   userId: req.user._id,
+  // });
 
-//   const subscriptionBooking = await Subscription.create(
-//     subscriptionBookingData
-//   );
+  // if (foundedSubsciptionBooking.length > 0) {
+  //   await Subscription.findByIdAndDelete(foundedSubsciptionBooking[0]._id);
+  // }
 
-//   // update host
-//   host.isSubscriber = true;
-//   host.subscription = subscriptionBooking._id;
-//   await host.save({ validateBeforeSave: false });
+  // const subscriptionBooking = await Subscription.create(
+  //   subscriptionBookingData
+  // );
 
-//   res.json({
-//     subscriptionBooking,
-//   });
-// });
+  // // update host
+  // host.isSubscriber = true;
+  // host.subscription = subscriptionBooking._id;
+  // await host.save({ validateBeforeSave: false });
+
+  res.json({
+    // subscription,
+    // defaultPayment,
+    subscriptionBookingData,
+  });
+});
 
 // TODO: Create a function that deletes the booking for mthe database when the user cancel the subscription
 

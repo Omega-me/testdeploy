@@ -92,19 +92,19 @@ router.get(
   hostController.createSubscriptionPlan,
   hostController.createSubCheckoutSession
 );
-// router.get(
-//   `${CONST.CREATE_SUBSCRIPTION_BOOKING}`,
-//   checkLoginType,
-//   conditional(
-//     function (req, res, next) {
-//       return req.role === CONST.NURSE_ROLE;
-//     },
-//     nurseAuth.protect,
-//     hostAuth.protect
-//   ),
-//   restrictTo(CONST.HOST_ROLE),
-//   hostController.createSubscriptionBooking
-// );
+router.get(
+  `${CONST.CREATE_SUBSCRIPTION_BOOKING}`,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.HOST_ROLE),
+  hostController.createSubscriptionBooking
+);
 
 router.route('/').get(hostController.getAll);
 // .post(hostController.create);
