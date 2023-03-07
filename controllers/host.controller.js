@@ -168,7 +168,10 @@ const createSubscriptionBooking = async (event) => {
 };
 
 const deleteSubscriptionBooking = async (event) => {
-  const subscription = await Subscription.findById(event.data.object.id);
+  const subscriptions = await Subscription.find({
+    subscriptionId: event.data.object.id,
+  });
+  const subscription = subscriptions[0];
   const host = await Host.findById(subscription.userId);
 
   await Subscription.findByIdAndDelete(subscription.id);
