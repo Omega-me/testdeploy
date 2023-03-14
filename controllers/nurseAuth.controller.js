@@ -162,7 +162,15 @@ exports.connectToStripe = catchAsync(async (req, res, next) => {
     return next(new AppError('This user is connected', CONST.FORBIDDEN));
   }
 
+  let customerName;
+  if (user.firstName && user.lastName) {
+    customerName = `${user.firstName} ${user.lastName}`;
+  } else {
+    customerName = user.displayName;
+  }
+
   if (!user.stripeAccountId) {
+    // create a stripe account
     const account = await stripe.accounts.create({
       type: 'express',
       email: user.email,
@@ -170,18 +178,16 @@ exports.connectToStripe = catchAsync(async (req, res, next) => {
         card_payments: { requested: true },
         transfers: { requested: true },
       },
+      company: {
+        name: customerName,
+      },
+      business_type: 'individual',
     });
     user.stripeAccountId = account.id;
   }
 
   if (!user.stripeCustomerId) {
     // create a stripe customer
-    let customerName;
-    if (user.firstName && user.lastName) {
-      customerName = `${user.firstName} ${user.lastName}`;
-    } else {
-      customerName = user.displayName;
-    }
     const customer = await stripe.customers.create({
       email: user.email,
       name: customerName,

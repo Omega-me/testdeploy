@@ -121,14 +121,14 @@ exports.verify = catchAsync(async (req, res, next) => {
   const account = await stripe.accounts.create({
     type: 'express',
     email: host.email,
-    name: `${host.firstName} ${host.lastName}`,
     capabilities: {
       card_payments: { requested: true },
       transfers: { requested: true },
     },
-    // company: {
-    //   name: `${host.firstName} ${host.lastName}`,
-    // },
+    company: {
+      name: `${host.firstName} ${host.lastName}`,
+    },
+    business_type: 'individual',
   });
   host.stripeAccountId = account.id;
 
@@ -157,6 +157,7 @@ exports.connectToStripe = catchAsync(async (req, res, next) => {
 
   if (!user.stripeAccountId) {
     // create a stripe account
+    // create a stripe account
     const account = await stripe.accounts.create({
       type: 'express',
       email: user.email,
@@ -164,6 +165,10 @@ exports.connectToStripe = catchAsync(async (req, res, next) => {
         card_payments: { requested: true },
         transfers: { requested: true },
       },
+      company: {
+        name: `${user.firstName} ${user.lastName}`,
+      },
+      business_type: 'individual',
     });
     user.stripeAccountId = account.id;
   }
