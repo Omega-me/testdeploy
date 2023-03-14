@@ -76,18 +76,13 @@ exports.createSubscriptionPlan = catchAsync(async (req, res, next) => {
 });
 
 exports.createSubCheckoutSession = catchAsync(async (req, res, next) => {
-  const cuscessUrl =
-    process.env.NODE_ENV !== 'development'
-      ? process.env.FRONTEND_URL
-      : `http://localhost:3333/api/v1/host/subscribtions?stripeCustomerId=${req.user.stripeCustomerId}`;
-  // Create the subscription session
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     cancel_url: process.env.FRONTEND_URL,
-    success_url: cuscessUrl,
+    success_url: process.env.FRONTEND_URL,
     currency: req.price.currency,
     customer: req.user.stripeCustomerId,
-    client_reference_id: req.user._id,
+    client_reference_id: req.user.id,
     payment_method_types: ['card'],
     line_items: [
       {
@@ -106,10 +101,7 @@ exports.createSubCheckoutSession = catchAsync(async (req, res, next) => {
 });
 
 const createSubscriptionBooking = async (event) => {
-  const hosts = await Host.find({
-    email: event.data.object.customer_details.email,
-  });
-  const host = hosts[0];
+  const host = await Host.findById(event.data.object.client_reference_id);
 
   const subscription = await stripe.subscriptions.retrieve(
     event.data.object.subscription

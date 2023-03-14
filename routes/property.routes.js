@@ -13,12 +13,12 @@ const router = Router();
 router.post(CONST.FILTER, propertyController.filter);
 router.get('/property-stats', propertyController.getPropertyStats);
 router.get('/property-within', propertyController.getPropertiesWithin);
-router.post(
+router.get(
   '/top-4-rooms',
   propertyController.findTop4Rooms,
   propertyController.filter
 );
-router.post(
+router.get(
   '/top-2-groups',
   propertyController.findTop2Groups,
   propertyController.filter
@@ -27,6 +27,21 @@ router.post(
 
 router.use('/:propertyId/reviews', reviewRouter);
 
+router.patch(
+  '/photo/:id',
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.HOST_ROLE),
+  propertyController.uploadPropertyImages,
+  propertyController.resizePropertyImages,
+  propertyController.updateOne
+);
 router
   .route('/')
   .get(propertyController.getAll)
@@ -40,8 +55,6 @@ router
       hostAuth.protect
     ),
     restrictTo(CONST.HOST_ROLE),
-    // propertyController.uploadPropertyImages,
-    // propertyController.resizePropertyImages,
     propertyController.create
   );
 router
@@ -57,8 +70,6 @@ router
       hostAuth.protect
     ),
     restrictTo(CONST.HOST_ROLE),
-    propertyController.uploadPropertyImages,
-    propertyController.resizePropertyImages,
     propertyController.updateOne
   )
   .delete(

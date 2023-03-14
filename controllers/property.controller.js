@@ -8,7 +8,9 @@ const AppError = require('../common/utils/AppError');
 const catchAsync = require('../common/utils/catchAsync');
 const CONST = require('../common/constants');
 
-const multerStorage = multer.memoryStorage();
+const multerStorage = multer.memoryStorage({
+  fileSize: 'Infinity',
+});
 
 const multerFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image')) {
@@ -31,7 +33,7 @@ const upload = multer({
 
 exports.uploadPropertyImages = upload.fields([
   { name: 'imageCover', maxCount: 1 },
-  { name: 'images', minCount: 4, maxCount: 10 },
+  { name: 'images', maxCount: 10 },
 ]);
 
 exports.resizePropertyImages = catchAsync(async (req, res, next) => {
@@ -49,7 +51,7 @@ exports.resizePropertyImages = catchAsync(async (req, res, next) => {
   await sharp(req.files.imageCover[0].buffer)
     .resize(2000, 1333)
     .toFormat('jpeg')
-    .jpeg({ quality: 95 })
+    .jpeg({ quality: 100 })
     .toFile(`${path}/${req.body.imageCover}`);
 
   // 2) Images
@@ -79,21 +81,18 @@ exports.getPropertyStats = catchAsync(async (req, res, next) => {
     },
     {
       $group: {
-        _id: { $toUpper: '$propertyType.type' }, // TODO: group by property type
-        numTours: { $sum: 1 },
+        _id: { $toUpper: '$propertyType.type' },
+        numProperties: { $sum: 1 },
         numRatings: { $sum: '$ratingsQuantity' },
         avgRating: { $avg: '$ratingsAverage' },
-        avgPrice: { $avg: '$price' },
-        minPrice: { $min: '$price' },
-        maxPrice: { $max: '$price' },
+        avgPrice: { $avg: '$details.price' },
+        minPrice: { $min: '$details.price' },
+        maxPrice: { $max: '$details.price' },
       },
     },
     {
       $sort: { avgPrice: 1 },
     },
-    // {
-    //   $match: { _id: { $ne: 'EASY' } }
-    // }
   ]);
 
   res.status(200).json({

@@ -43,6 +43,20 @@ router.post(
   nurseAuth.verify
 );
 
+router.post(
+  `${CONST.CONNECT_TO_STRIPE}`,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.NURSE_ROLE),
+  nurseAuth.connectToStripe
+);
+
 router.post(CONST.SIGNIN, nurseAuth.signin);
 
 router.post(

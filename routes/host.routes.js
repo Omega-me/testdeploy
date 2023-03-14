@@ -39,6 +39,19 @@ router.post(
   restrictTo(CONST.HOST_ROLE),
   hostAuth.verify
 );
+router.post(
+  `${CONST.CONNECT_TO_STRIPE}`,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.HOST_ROLE),
+  hostAuth.connectToStripe
+);
 
 router.post(CONST.SIGNIN, hostAuth.signin);
 

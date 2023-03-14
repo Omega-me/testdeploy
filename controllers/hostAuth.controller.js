@@ -120,6 +120,15 @@ exports.verify = catchAsync(async (req, res, next) => {
   // create a stripe account
   const account = await stripe.accounts.create({
     type: 'express',
+    email: host.email,
+    name: `${host.firstName} ${host.lastName}`,
+    capabilities: {
+      card_payments: { requested: true },
+      transfers: { requested: true },
+    },
+    // company: {
+    //   name: `${host.firstName} ${host.lastName}`,
+    // },
   });
   host.stripeAccountId = account.id;
 
@@ -128,6 +137,53 @@ exports.verify = catchAsync(async (req, res, next) => {
   res.status(CONST.OK).json({
     status: CONST.SUCCESS,
     message: 'Host verified successfuly!',
+  });
+});
+
+exports.connectToStripe = catchAsync(async (req, res, next) => {
+  const user = await Host.findById(req.user._id);
+  if (!user) {
+    return next(
+      new AppError(
+        'Please login to add payment information!',
+        CONST.UNAUTHORIZED
+      )
+    );
+  }
+
+  if (user.stripeAccountId && user.stripeCustomerId) {
+    return next(new AppError('This user is connected', CONST.FORBIDDEN));
+  }
+
+  if (!user.stripeAccountId) {
+    // create a stripe account
+    const account = await stripe.accounts.create({
+      type: 'express',
+      email: user.email,
+      capabilities: {
+        card_payments: { requested: true },
+        transfers: { requested: true },
+      },
+    });
+    user.stripeAccountId = account.id;
+  }
+
+  if (!user.stripeCustomerId) {
+    // create a stripe customer
+    const customer = await stripe.customers.create({
+      email: user.email,
+      name: `${user.firstName} ${user.lastName}`,
+    });
+    user.stripeCustomerId = customer.id;
+  }
+
+  await user.save({ validateBeforeSave: false });
+
+  res.status(CONST.OK).json({
+    status: CONST.SUCCESS,
+    data: {
+      messagge: 'User connected successfuly',
+    },
   });
 });
 

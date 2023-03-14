@@ -27,6 +27,7 @@ const nursePropertySaveRouter = require('../routes/nursePropertySave.routes');
 const groupRentalRouter = require('../routes/groupRental.routes');
 const subscriptionPricingRouter = require('../routes/subscriptionPricing.routes');
 const subscriptionRouter = require('../routes/subscription.routes');
+const bookingsRouter = require('../routes/booking.routes');
 
 // webhooks controllers
 const hostController = require('../controllers/host.controller');
@@ -91,6 +92,7 @@ app.use(`${CONST.BASE}/${CONST.SAVES}`, nursePropertySaveRouter);
 app.use(`${CONST.BASE}/${CONST.GROUPS}`, groupRentalRouter);
 app.use(`${CONST.BASE}/${CONST.PRICINGS}`, subscriptionPricingRouter);
 app.use(`${CONST.BASE}/${CONST.SUBSCRIBTIONS}`, subscriptionRouter);
+app.use(`${CONST.BASE}/${CONST.BOOKINGS}`, bookingsRouter);
 
 app.all('*', (req, res, next) => {
   next(
