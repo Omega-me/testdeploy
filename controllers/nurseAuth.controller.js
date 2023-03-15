@@ -124,21 +124,6 @@ exports.verify = catchAsync(async (req, res, next) => {
   });
   nurse.stripeCustomerId = customer.id;
 
-  // create a stripe account
-  const account = await stripe.accounts.create({
-    type: 'express',
-    email: nurse.email,
-    capabilities: {
-      card_payments: { requested: true },
-      transfers: { requested: true },
-    },
-    company: {
-      name: customerName,
-    },
-    business_type: 'individual',
-  });
-  nurse.stripeAccountId = account.id;
-
   await nurse.save({ validateBeforeSave: false });
 
   res.status(CONST.OK).json({
@@ -158,7 +143,7 @@ exports.connectToStripe = catchAsync(async (req, res, next) => {
     );
   }
 
-  if (user.stripeAccountId && user.stripeCustomerId) {
+  if (user.stripeCustomerId) {
     return next(new AppError('This user is connected', CONST.FORBIDDEN));
   }
 
@@ -167,23 +152,6 @@ exports.connectToStripe = catchAsync(async (req, res, next) => {
     customerName = `${user.firstName} ${user.lastName}`;
   } else {
     customerName = user.displayName;
-  }
-
-  if (!user.stripeAccountId) {
-    // create a stripe account
-    const account = await stripe.accounts.create({
-      type: 'express',
-      email: user.email,
-      capabilities: {
-        card_payments: { requested: true },
-        transfers: { requested: true },
-      },
-      company: {
-        name: customerName,
-      },
-      business_type: 'individual',
-    });
-    user.stripeAccountId = account.id;
   }
 
   if (!user.stripeCustomerId) {

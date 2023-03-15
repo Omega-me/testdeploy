@@ -117,21 +117,6 @@ exports.verify = catchAsync(async (req, res, next) => {
   });
   host.stripeCustomerId = customer.id;
 
-  // create a stripe account
-  const account = await stripe.accounts.create({
-    type: 'express',
-    email: host.email,
-    capabilities: {
-      card_payments: { requested: true },
-      transfers: { requested: true },
-    },
-    company: {
-      name: `${host.firstName} ${host.lastName}`,
-    },
-    business_type: 'individual',
-  });
-  host.stripeAccountId = account.id;
-
   await host.save({ validateBeforeSave: false });
 
   res.status(CONST.OK).json({
@@ -141,6 +126,7 @@ exports.verify = catchAsync(async (req, res, next) => {
 });
 
 exports.connectToStripe = catchAsync(async (req, res, next) => {
+  // const data = req.body;
   const user = await Host.findById(req.user._id);
   if (!user) {
     return next(
@@ -157,9 +143,9 @@ exports.connectToStripe = catchAsync(async (req, res, next) => {
 
   if (!user.stripeAccountId) {
     // create a stripe account
-    // create a stripe account
+    // https://stripe.com/docs/api/accounts/object
     const account = await stripe.accounts.create({
-      type: 'express',
+      type: 'custom',
       email: user.email,
       capabilities: {
         card_payments: { requested: true },
@@ -169,6 +155,32 @@ exports.connectToStripe = catchAsync(async (req, res, next) => {
         name: `${user.firstName} ${user.lastName}`,
       },
       business_type: 'individual',
+      business_profile: {
+        mcc: 8931, // https://stripe.com/docs/connect/setting-mcc#list
+        url: 'https://nursesrent.com/',
+      },
+      tos_acceptance: {
+        ip: '8.8.8.8', // users ip address
+        date: '1609798905', // date when he accepts terms https://stripe.com/docs/connect/updating-accounts
+      },
+      individual: {
+        first_name: user.firstName,
+        last_name: user.lastName,
+        dob: {
+          day: 21,
+          month: 2,
+          year: 1999,
+        },
+        address: {
+          line1: '916 Water St',
+          postal_code: 99901,
+          city: 'Ketchikan',
+          state: 'Alaska',
+        },
+        email: user.email,
+        phone: '+1-202-555-0156',
+        ssn_last_4: '0000',
+      },
     });
     user.stripeAccountId = account.id;
   }

@@ -10,10 +10,10 @@ const AppError = require('../common/utils/AppError');
 const CONST = require('../common/constants');
 
 exports.checkValidToSubscribe = catchAsync(async (req, res, next) => {
-  if (!req.user.stripeCustomerId && !req.user.stripeAccountId) {
+  if (!req.user.stripeCustomerId) {
     return next(
       new AppError(
-        'User not valid, please connect for payment and subscription.',
+        'User not valid, please connect your account for subscription.',
         CONST.FORBIDDEN
       )
     );
@@ -203,7 +203,6 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
 });
 
 const nurseSelectedFields = [
-  '-stripeAccountId',
   '-stripeCustomerId',
   '-passwordResetToken',
   '-verificationToken',

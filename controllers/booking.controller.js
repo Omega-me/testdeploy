@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-/* eslint-disable no-case-declarations */
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const handlerFactory = require('../common/midlewares/handlerFactory');
 const catchAsync = require('../common/utils/catchAsync');
@@ -87,27 +85,18 @@ exports.cratePropertyBookingCheckout = catchAsync(async (req, res, next) => {
     customer: req.user.stripeCustomerId,
     payment_method_types: ['card'],
     payment_intent_data: {
-      application_fee_amount: 10038,
+      application_fee_amount: (property.details.price * 100) / 10,
       receipt_email: owner.email,
       transfer_data: {
         destination: owner.stripeAccountId,
-        amount: 1846,
       },
     },
-
-    // application_fee_amount: ((property.details.price * 100) / 100) * 10, // 10% fee
-    // stripeAccount: owner.stripeAccountId,
   });
-
-  const userStripeAccount = await stripe.accounts.retrieve(
-    owner.stripeAccountId
-  );
 
   res.status(CONST.OK).json({
     status: CONST.SUCCESS,
     data: {
-      session,
-      userStripeAccount,
+      sessionUrl: session.url,
     },
   });
 });
