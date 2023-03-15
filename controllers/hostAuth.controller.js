@@ -110,13 +110,6 @@ exports.verify = catchAsync(async (req, res, next) => {
   host.verificationToken = undefined;
   host.isVerified = true;
 
-  // create a stripe customer
-  const customer = await stripe.customers.create({
-    email: host.email,
-    name: `${host.firstName} ${host.lastName}`,
-  });
-  host.stripeCustomerId = customer.id;
-
   await host.save({ validateBeforeSave: false });
 
   res.status(CONST.OK).json({
@@ -126,7 +119,6 @@ exports.verify = catchAsync(async (req, res, next) => {
 });
 
 exports.connectToStripe = catchAsync(async (req, res, next) => {
-  // const data = req.body;
   const user = await Host.findById(req.user._id);
   if (!user) {
     return next(
@@ -137,13 +129,24 @@ exports.connectToStripe = catchAsync(async (req, res, next) => {
     );
   }
 
+  if (!user.isVerified) {
+    return next(new AppError('Please verify email!', CONST.FORBIDDEN));
+  }
+
   if (user.stripeAccountId && user.stripeCustomerId) {
     return next(new AppError('This user is connected', CONST.FORBIDDEN));
   }
 
   if (!user.stripeAccountId) {
+    const { dateOfBirth, address, ssnLast4, tosAcceptanceIp } = req.body;
+    if (!tosAcceptanceIp) {
+      return next(
+        new AppError('You need to accept terms and conditions', CONST.FORBIDDEN)
+      );
+    }
+    const dob = new Date(dateOfBirth);
+
     // create a stripe account
-    // https://stripe.com/docs/api/accounts/object
     const account = await stripe.accounts.create({
       type: 'custom',
       email: user.email,
@@ -156,30 +159,30 @@ exports.connectToStripe = catchAsync(async (req, res, next) => {
       },
       business_type: 'individual',
       business_profile: {
-        mcc: 8931, // https://stripe.com/docs/connect/setting-mcc#list
+        mcc: 8931,
         url: 'https://nursesrent.com/',
       },
       tos_acceptance: {
-        ip: '8.8.8.8', // users ip address
-        date: '1609798905', // date when he accepts terms https://stripe.com/docs/connect/updating-accounts
+        ip: tosAcceptanceIp,
+        date: Math.floor(Date.now() / 1000),
       },
       individual: {
         first_name: user.firstName,
         last_name: user.lastName,
         dob: {
-          day: 21,
-          month: 2,
-          year: 1999,
+          day: dob.getDay(),
+          month: dob.getMonth(),
+          year: dob.getFullYear(),
         },
         address: {
-          line1: '916 Water St',
-          postal_code: 99901,
-          city: 'Ketchikan',
-          state: 'Alaska',
+          line1: address.line1,
+          postal_code: address.postalCode,
+          city: address.city,
+          state: address.state,
         },
         email: user.email,
-        phone: '+1-202-555-0156',
-        ssn_last_4: '0000',
+        phone: user.phone,
+        ssn_last_4: ssnLast4,
       },
     });
     user.stripeAccountId = account.id;

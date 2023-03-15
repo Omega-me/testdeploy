@@ -110,20 +110,6 @@ exports.verify = catchAsync(async (req, res, next) => {
 
   nurse.verificationToken = undefined;
   nurse.isVerified = true;
-
-  // create a stripe customer
-  let customerName;
-  if (nurse.firstName && nurse.lastName) {
-    customerName = `${nurse.firstName} ${nurse.lastName}`;
-  } else {
-    customerName = nurse.displayName;
-  }
-  const customer = await stripe.customers.create({
-    email: nurse.email,
-    name: customerName,
-  });
-  nurse.stripeCustomerId = customer.id;
-
   await nurse.save({ validateBeforeSave: false });
 
   res.status(CONST.OK).json({
@@ -134,6 +120,7 @@ exports.verify = catchAsync(async (req, res, next) => {
 
 exports.connectToStripe = catchAsync(async (req, res, next) => {
   const user = await Nurse.findById(req.user._id);
+
   if (!user) {
     return next(
       new AppError(
@@ -141,6 +128,10 @@ exports.connectToStripe = catchAsync(async (req, res, next) => {
         CONST.UNAUTHORIZED
       )
     );
+  }
+
+  if (!user.isVerified) {
+    return next(new AppError('Please verify email!', CONST.FORBIDDEN));
   }
 
   if (user.stripeCustomerId) {
@@ -154,14 +145,12 @@ exports.connectToStripe = catchAsync(async (req, res, next) => {
     customerName = user.displayName;
   }
 
-  if (!user.stripeCustomerId) {
-    // create a stripe customer
-    const customer = await stripe.customers.create({
-      email: user.email,
-      name: customerName,
-    });
-    user.stripeCustomerId = customer.id;
-  }
+  // create a stripe customer
+  const customer = await stripe.customers.create({
+    email: user.email,
+    name: customerName,
+  });
+  user.stripeCustomerId = customer.id;
 
   await user.save({ validateBeforeSave: false });
 

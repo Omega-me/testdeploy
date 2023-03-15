@@ -30,6 +30,7 @@ const subscriptionRouter = require('../routes/subscription.routes');
 const bookingsRouter = require('../routes/booking.routes');
 
 // webhooks controllers
+// const bookingController = require('../controllers/booking.controller');
 const hostController = require('../controllers/host.controller');
 const nurseController = require('../controllers/nurse.controller');
 
@@ -50,6 +51,11 @@ app.use(cors({ origin: true, credentials: true }));
 // app.use(`${CONST.API_ROUTE}/${CONST.USERS}`, limiter); // limit requests from the same api
 app.use('/public', express.static(path.join(__dirname, '../public')));
 // Stripe webhook endpoints
+// app.use(
+//   '/property-boooking-webhook',
+//   express.raw({ type: 'application/json' }),
+//   bookingController.listenTopropertyBookingWebhook
+// );
 app.use(
   '/host/subscribe-webhook',
   express.raw({ type: 'application/json' }),
