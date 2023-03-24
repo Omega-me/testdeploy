@@ -6,8 +6,13 @@ const hostController = require('../controllers/host.controller');
 const nurseAuth = require('../controllers/nurseAuth.controller');
 const { restrictTo } = require('../common/midlewares/restrict');
 const { checkLoginType } = require('../common/midlewares/checkLoginType');
+const propertyRouter = require('./property.routes');
+const groupRouter = require('./groupRental.routes');
 
 const router = Router();
+
+router.use('/:hostId/properties', propertyRouter);
+router.use('/:hostId/groups', groupRouter);
 
 // auth routes
 router.post(CONST.SIGNUP, hostAuth.signup);

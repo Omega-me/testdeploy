@@ -3,6 +3,9 @@ const bcrypt = require('bcryptjs');
 const validator = require('validator');
 const { v4: uuidv4 } = require('uuid');
 const { signOrEncryptTokens } = require('../common/utils');
+const Review = require('./review.model');
+const Booking = require('./booking.model');
+const Subscription = require('./subscription.model');
 const CONST = require('../common/constants');
 
 const nurseSchema = new mongoose.Schema(
@@ -43,18 +46,19 @@ const nurseSchema = new mongoose.Schema(
     about: String,
     propertyRental: {
       workExperience: {
-        occupation: {
-          type: String,
-          enum: ['OC1', 'OC2'],
-        },
         speciality: {
           type: String,
-          enum: ['SP1', 'SP2'],
+          enum: [
+            'Emrgency',
+            'Skilled nursing',
+            'OB/GYN',
+            'ICU',
+            'OR',
+            'Cardiology',
+            'Pediatrics',
+          ],
         },
-        favouriteStateToWork: {
-          type: String,
-          enum: ['FSTW1', 'FSTW2'],
-        },
+        favouriteStateToWork: [String],
         certification: String,
         professionalTravelingSince: Date,
         current: Date,
@@ -89,7 +93,7 @@ const nurseSchema = new mongoose.Schema(
     licenseType: {
       type: String,
       required: [true, 'Nurse must have a licence type!'],
-      enum: ['LT1', 'LT2'],
+      enum: ['Aide', 'CNA', 'LVN/LPN', 'RN', 'CRNA', ' NP/DR'],
     },
     licenseNumber: {
       type: Number,
@@ -129,26 +133,6 @@ const nurseSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'Subscription',
     },
-
-    // relations
-    // reviews: [
-    //   {
-    //     type: mongoose.Schema.ObjectId,
-    //     ref: 'Review',
-    //   },
-    // ],
-    // bookings: [
-    //   {
-    //     type: mongoose.Schema.ObjectId,
-    //     ref: 'Booking',
-    //   },
-    // ],
-    // payments: [
-    //   {
-    //     type: mongoose.Schema.ObjectId,
-    //     ref: 'NursePayment',
-    //   },
-    // ],
   },
   {
     toJSON: { virtuals: true },
@@ -200,6 +184,15 @@ nurseSchema.pre('save', async function (next) {
   this.refreshToken = refreshToken;
 
   next();
+});
+
+// cascade delete
+nurseSchema.post('findOneAndDelete', async function (doc) {
+  if (doc) {
+    await Review.deleteMany({ nurse: doc._id }).exec();
+    await Booking.deleteMany({ nurse: doc._id }).exec();
+    await Subscription.deleteOne({ userId: doc?._id }).exec();
+  }
 });
 
 nurseSchema.methods.checkPassword = async function (

@@ -4,7 +4,11 @@ const CONST = require('../constants');
 exports.restrictTo =
   (...roles) =>
   (req, res, next) => {
-    if (!req.params.verificationToken && !req.user.isVerified) {
+    if (
+      !req.params.verificationToken &&
+      req.url !== '/sendverificationtoken' &&
+      !req.user.isVerified
+    ) {
       return next(
         new AppError('Please Verify your email!', CONST.UNAUTHORIZED)
       );

@@ -28,7 +28,7 @@ exports.signJWTToken;
  * @param {*} stausCode
  * @returns
  */
-exports.sendUserTokenSuccess = async (user, res, stausCode = CONST.OK) => {
+exports.sendUserTokenSuccess = async (user, req, res, stausCode = CONST.OK) => {
   const token = signJWTToken(user);
 
   const jwtCookieOptions = {
@@ -38,9 +38,8 @@ exports.sendUserTokenSuccess = async (user, res, stausCode = CONST.OK) => {
     ),
     httpOnly: true,
     sameSite: 'lax',
-    secure: false,
+    secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
   };
-  if (process.env.NODE_ENV !== CONST.PROD) jwtCookieOptions.secure = true;
   res.cookie('jwt', token, jwtCookieOptions);
 
   if (!user.isVerified) {

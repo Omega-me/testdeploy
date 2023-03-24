@@ -51,7 +51,7 @@ exports.signup = catchAsync(async (req, res, next) => {
       if (!isSuccess) {
         await Nurse.findByIdAndDelete(createdUser.id);
       } else {
-        sendUserTokenSuccess(createdUser, res, CONST.CREATED);
+        sendUserTokenSuccess(createdUser, req, res, CONST.CREATED);
       }
     }
   }
@@ -77,14 +77,12 @@ exports.sendVerifyAccountEmail = catchAsync(async (req, res, next) => {
     if (process.env.NODE_ENV === CONST.DEV && !user.isVerified) {
       return res.status(CONST.OK).json({
         status: CONST.SUCCESS,
-        message:
-          'We have sent an e-mail with instructions on how to verufy your email account.',
+        message: 'We have sent an e-mail with verification instructions.',
       });
     }
     res.status(CONST.OK).json({
       status: CONST.SUCCESS,
-      message:
-        'We have sent an e-mail with instructions on how to verufy your email account.',
+      message: 'We have sent an e-mail with verification instructions.',
     });
   }
 });
@@ -100,7 +98,7 @@ exports.verify = catchAsync(async (req, res, next) => {
 
   if (!nurse) {
     return next(
-      new AppError('Verification failed, please try again!', CONST.UNAUTHORIZED)
+      new AppError('Verification failed, invalid token!', CONST.BAD_REQUEST)
     );
   }
 
@@ -183,7 +181,7 @@ exports.signin = catchAsync(async (req, res, next) => {
     );
   }
 
-  sendUserTokenSuccess(nurse, res);
+  sendUserTokenSuccess(nurse, req, res);
 });
 
 exports.logOut = (_req, res) => {
@@ -323,7 +321,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   nurse.passwordResetToken = undefined;
   await nurse.save();
 
-  sendUserTokenSuccess(nurse, res);
+  sendUserTokenSuccess(nurse, req, res);
 });
 
 // update password even if the user has not forget it
@@ -346,7 +344,7 @@ exports.updatepassword = catchAsync(async (req, res, next) => {
   nurse.passwordConfirm = passwordConfirm;
   await nurse.save();
 
-  sendUserTokenSuccess(nurse, res);
+  sendUserTokenSuccess(nurse, req, res);
 });
 
 // refresh user token
@@ -367,5 +365,5 @@ exports.refresh = catchAsync(async (req, res, next) => {
     );
   }
 
-  sendUserTokenSuccess(freshNurse, res);
+  sendUserTokenSuccess(freshNurse, req, res);
 });

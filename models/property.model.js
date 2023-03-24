@@ -2,6 +2,10 @@ const mongoose = require('mongoose');
 const slugify = require('slugify');
 const validator = require('validator');
 const NursePropertySaveModel = require('./nursePropertySave.model');
+const Review = require('./review.model');
+const Booking = require('./booking.model');
+const AppError = require('../common/utils/AppError');
+const CONST = require('../common/constants');
 
 const propertySchema = new mongoose.Schema(
   {
@@ -113,7 +117,7 @@ const propertySchema = new mongoose.Schema(
           type: Boolean,
           default: true,
         },
-        hasCarParkang: {
+        hasCarParking: {
           type: Boolean,
           default: true,
         },
@@ -191,6 +195,10 @@ const propertySchema = new mongoose.Schema(
       ref: 'Host',
       required: [true, 'A property must be created by a host user!'],
     },
+    group: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'GroupRental',
+    },
     booking: {
       type: mongoose.Schema.ObjectId,
       ref: 'Booking',
@@ -203,6 +211,7 @@ const propertySchema = new mongoose.Schema(
   }
 );
 
+propertySchema.index({ location: '2dsphere' });
 propertySchema.index({ price: 1, ratingsAverage: -1 });
 propertySchema.index({ slug: 1 });
 
@@ -217,9 +226,46 @@ propertySchema.pre('save', function (next) {
   this.slug = slugify(this.title, { lower: true });
   next();
 });
-propertySchema.pre('update', function (next) {
+propertySchema.pre('findOneAndUpdate', function (next) {
   this.slug = slugify(this.title, { lower: true });
   next();
+});
+
+// prevent property delete if it has an active booking
+const prventPropertyDelete = async (propertyId) => {
+  try {
+    const bookings = await Booking.find({ property: propertyId });
+    if (bookings.length !== 0) {
+      bookings.forEach((booking) => {
+        if (booking.isActive === true) {
+          throw new AppError(
+            'You can not delete a property which has active booking',
+            CONST.FORBIDDEN
+          );
+        }
+      });
+    }
+  } catch (error) {
+    throw new AppError(
+      'There was a problem removing the properties',
+      CONST.INTERNAL_SERVER_ERROR
+    );
+  }
+};
+propertySchema.pre('findOneAndDelete', async function (next) {
+  await prventPropertyDelete(this._id);
+  next();
+});
+// cascade delete
+propertySchema.post('findOneAndDelete', async function (doc) {
+  if (doc) {
+    Review.deleteMany({ property: doc._id }).exec();
+  }
+});
+propertySchema.post('deleteMany', async function (doc) {
+  if (doc) {
+    Review.deleteMany({ property: doc._id }).exec();
+  }
 });
 
 propertySchema.pre('init', async function (doc) {
@@ -232,4 +278,5 @@ propertySchema.pre('init', async function (doc) {
   this.numberOfLikes = likes.length;
 });
 
-module.exports = mongoose.model('Property', propertySchema);
+const Property = mongoose.model('Property', propertySchema);
+module.exports = Property;

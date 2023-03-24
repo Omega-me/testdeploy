@@ -23,6 +23,11 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    isActive: {
+      type: Boolean,
+      required: true,
+      default: true,
+    },
 
     // relations
     nurse: {
@@ -33,7 +38,7 @@ const bookingSchema = new mongoose.Schema(
     property: {
       type: mongoose.Schema.ObjectId,
       ref: 'Property',
-      required: [true, 'A property should be booked!'],
+      required: [true, 'A booking must have a property!'],
     },
   },
   {

@@ -3,6 +3,9 @@ const bcrypt = require('bcryptjs');
 const validator = require('validator');
 const { v4: uuidv4 } = require('uuid');
 const { signOrEncryptTokens } = require('../common/utils');
+const Property = require('./property.model');
+const Subscription = require('./subscription.model');
+const GroupRental = require('./groupRental.model');
 const CONST = require('../common/constants');
 
 const hostSchema = new mongoose.Schema(
@@ -98,18 +101,6 @@ const hostSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'Subscription',
     },
-    // properties: [
-    //   {
-    //     type: mongoose.Schema.ObjectId,
-    //     ref: 'Property',
-    //   },
-    // ],
-    // payments: [
-    //   {
-    //     type: mongoose.Schema.ObjectId,
-    //     ref: 'HostPayment',
-    //   },
-    // ],
   },
   {
     toJSON: { virtuals: true },
@@ -155,6 +146,15 @@ hostSchema.pre('save', async function (next) {
   this.refreshToken = refreshToken;
 
   next();
+});
+
+// cascade delete
+hostSchema.post('findOneAndDelete', async function (doc) {
+  if (doc) {
+    await Property.deleteMany({ host: doc?._id }).exec();
+    await GroupRental.deleteMany({ host: doc?._id }).exec();
+    await Subscription.deleteOne({ userId: doc?._id }).exec();
+  }
 });
 
 hostSchema.methods.checkPassword = async function (

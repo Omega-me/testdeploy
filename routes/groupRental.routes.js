@@ -7,7 +7,7 @@ const hostAuth = require('../controllers/hostAuth.controller');
 const nurseAuth = require('../controllers/nurseAuth.controller');
 const { checkLoginType } = require('../common/midlewares/checkLoginType');
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
 router.post(CONST.FILTER, groupRentalController.filter);
 router
@@ -23,7 +23,7 @@ router
       hostAuth.protect
     ),
     restrictTo(CONST.HOST_ROLE),
-    groupRentalController.checkPropertyType,
+    groupRentalController.checkHostValidity,
     groupRentalController.create
   );
 router
@@ -39,7 +39,7 @@ router
       hostAuth.protect
     ),
     restrictTo(CONST.HOST_ROLE),
-    groupRentalController.checkPropertyType,
+    groupRentalController.checkValidityforDeleteUpdate,
     groupRentalController.updateOne
   )
   .delete(
@@ -52,6 +52,8 @@ router
       hostAuth.protect
     ),
     restrictTo(CONST.HOST_ROLE),
+    groupRentalController.checkValidityforDeleteUpdate,
+    groupRentalController.checkBeforeDelete,
     groupRentalController.deleteOne
   );
 

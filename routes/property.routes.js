@@ -8,7 +8,7 @@ const nurseAuth = require('../controllers/nurseAuth.controller');
 const CONST = require('../common/constants');
 const { checkLoginType } = require('../common/midlewares/checkLoginType');
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
 router.post(CONST.FILTER, propertyController.filter);
 router.get('/property-stats', propertyController.getPropertyStats);
@@ -23,7 +23,18 @@ router.get(
   propertyController.findTop2Groups,
   propertyController.filter
 );
+router.get(
+  '/featured-properties',
+  propertyController.findFeaturedProperties,
+  propertyController.filter
+);
+router.get(
+  '/featured-group',
+  propertyController.findFeaturedGroup,
+  propertyController.filter
+);
 // /property-within?distance=233&center=-40,45&unit=mi
+router.get('/locations', propertyController.searchForLocations);
 
 router.use('/:propertyId/reviews', reviewRouter);
 
@@ -38,6 +49,7 @@ router.patch(
     hostAuth.protect
   ),
   restrictTo(CONST.HOST_ROLE),
+  propertyController.checkIfPropertyBelongsToUser,
   propertyController.uploadPropertyImages,
   propertyController.resizePropertyImages,
   propertyController.updateOne
@@ -55,6 +67,7 @@ router
       hostAuth.protect
     ),
     restrictTo(CONST.HOST_ROLE),
+    propertyController.checkIfGroupExists,
     propertyController.create
   );
 router
@@ -70,6 +83,8 @@ router
       hostAuth.protect
     ),
     restrictTo(CONST.HOST_ROLE),
+    propertyController.checkIfPropertyBelongsToUser,
+    propertyController.checkIfGroupExists,
     propertyController.updateOne
   )
   .delete(
@@ -82,6 +97,7 @@ router
       hostAuth.protect
     ),
     restrictTo(CONST.HOST_ROLE),
+    propertyController.checkIfPropertyBelongsToUser,
     propertyController.deleteOne
   );
 

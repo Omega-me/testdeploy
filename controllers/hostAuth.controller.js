@@ -51,7 +51,7 @@ exports.signup = catchAsync(async (req, res, next) => {
       if (!isSuccess) {
         await Host.findByIdAndDelete(createdUser.id);
       } else {
-        sendUserTokenSuccess(createdUser, res, CONST.CREATED);
+        sendUserTokenSuccess(createdUser, req, res, CONST.CREATED);
       }
     }
   }
@@ -76,14 +76,12 @@ exports.sendVerifyAccountEmail = catchAsync(async (req, res, next) => {
     if (process.env.NODE_ENV === CONST.DEV && !user.isVerified) {
       return res.status(CONST.OK).json({
         status: CONST.SUCCESS,
-        message:
-          'We have sent an e-mail with instructions on how to verufy your email account.',
+        message: 'We have sent an e-mail with verification instructions.',
       });
     }
     res.status(CONST.OK).json({
       status: CONST.SUCCESS,
-      message:
-        'We have sent an e-mail with instructions on how to verufy your email account.',
+      message: 'We have sent an e-mail with verification instructions.',
     });
   }
 });
@@ -228,7 +226,7 @@ exports.signin = catchAsync(async (req, res, next) => {
     );
   }
 
-  sendUserTokenSuccess(host, res);
+  sendUserTokenSuccess(host, req, res);
 });
 
 exports.logOut = (_req, res) => {
@@ -366,7 +364,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   host.passwordResetToken = undefined;
   await host.save();
 
-  sendUserTokenSuccess(host, res);
+  sendUserTokenSuccess(host, req, res);
 });
 
 // update password even if the user has not forget it
@@ -389,7 +387,7 @@ exports.updatepassword = catchAsync(async (req, res, next) => {
   host.passwordConfirm = passwordConfirm;
   await host.save();
 
-  sendUserTokenSuccess(host, res);
+  sendUserTokenSuccess(host, req, res);
 });
 
 // refresh user token
@@ -408,5 +406,5 @@ exports.refresh = catchAsync(async (req, res, next) => {
     );
   }
 
-  sendUserTokenSuccess(freshHost, res);
+  sendUserTokenSuccess(freshHost, req, res);
 });
