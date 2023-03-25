@@ -108,6 +108,21 @@ exports.verify = catchAsync(async (req, res, next) => {
 
   nurse.verificationToken = undefined;
   nurse.isVerified = true;
+
+  let customerName;
+  if (nurse.firstName && nurse.lastName) {
+    customerName = `${nurse.firstName} ${nurse.lastName}`;
+  } else {
+    customerName = nurse.displayName;
+  }
+
+  // create a stripe customer
+  const customer = await stripe.customers.create({
+    email: nurse.email,
+    name: customerName,
+  });
+  nurse.stripeCustomerId = customer.id;
+
   await nurse.save({ validateBeforeSave: false });
 
   res.status(CONST.OK).json({

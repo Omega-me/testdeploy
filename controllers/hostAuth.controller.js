@@ -108,6 +108,12 @@ exports.verify = catchAsync(async (req, res, next) => {
   host.verificationToken = undefined;
   host.isVerified = true;
 
+  const customer = await stripe.customers.create({
+    email: host.email,
+    name: `${host.firstName} ${host.lastName}`,
+  });
+  host.stripeCustomerId = customer.id;
+
   await host.save({ validateBeforeSave: false });
 
   res.status(CONST.OK).json({
@@ -131,19 +137,7 @@ exports.connectToStripe = catchAsync(async (req, res, next) => {
     return next(new AppError('Please verify email!', CONST.FORBIDDEN));
   }
 
-  if (user.stripeAccountId && user.stripeCustomerId) {
-    return next(new AppError('This user is connected', CONST.FORBIDDEN));
-  }
-
   if (!user.stripeAccountId) {
-    const { dateOfBirth, address, ssnLast4, tosAcceptanceIp } = req.body;
-    if (!tosAcceptanceIp) {
-      return next(
-        new AppError('You need to accept terms and conditions', CONST.FORBIDDEN)
-      );
-    }
-    const dob = new Date(dateOfBirth);
-
     // create a stripe account
     const account = await stripe.accounts.create({
       type: 'custom',
@@ -152,35 +146,10 @@ exports.connectToStripe = catchAsync(async (req, res, next) => {
         card_payments: { requested: true },
         transfers: { requested: true },
       },
-      company: {
-        name: `${user.firstName} ${user.lastName}`,
-      },
       business_type: 'individual',
       business_profile: {
         mcc: 8931,
         url: 'https://nursesrent.com/',
-      },
-      tos_acceptance: {
-        ip: tosAcceptanceIp,
-        date: Math.floor(Date.now() / 1000),
-      },
-      individual: {
-        first_name: user.firstName,
-        last_name: user.lastName,
-        dob: {
-          day: dob.getDay(),
-          month: dob.getMonth(),
-          year: dob.getFullYear(),
-        },
-        address: {
-          line1: address.line1,
-          postal_code: address.postalCode,
-          city: address.city,
-          state: address.state,
-        },
-        email: user.email,
-        phone: user.phone,
-        ssn_last_4: ssnLast4,
       },
     });
     user.stripeAccountId = account.id;
@@ -195,13 +164,100 @@ exports.connectToStripe = catchAsync(async (req, res, next) => {
     user.stripeCustomerId = customer.id;
   }
 
+  const accountLink = await stripe.accountLinks.create({
+    account: user.stripeAccountId,
+    refresh_url: 'https://nursesrent.com/',
+    return_url: 'https://nursesrent.com/',
+    type: 'account_onboarding',
+    collect: 'eventually_due',
+  });
+
   await user.save({ validateBeforeSave: false });
 
   res.status(CONST.OK).json({
     status: CONST.SUCCESS,
     data: {
-      messagge: 'User connected successfuly',
+      connectUrl: accountLink.url,
     },
+  });
+});
+
+exports.addDebitCard = catchAsync(async (req, res, next) => {
+  const { user, body } = req;
+
+  if (!user.stripeCustomerId) {
+    return next(
+      new AppError(
+        'Please connect your account to stripe first',
+        CONST.FORBIDDEN
+      )
+    );
+  }
+
+  const cardToken = await stripe.tokens.create({
+    card: {
+      name: body.nameOnCard,
+      number: body.number,
+      exp_month: body.expMonth,
+      exp_year: body.expYear,
+      cvc: body.cvc,
+      currency: 'usd',
+      default_for_currency: true,
+    },
+  });
+
+  await stripe.accounts.createExternalAccount(user.stripeAccountId, {
+    external_account: cardToken.id,
+  });
+
+  await stripe.accounts.retrieve(user.stripeAccountId);
+
+  res.status(CONST.OK).json({
+    status: CONST.SUCCESS,
+    message: 'Debit card successfuly added to account',
+  });
+});
+
+exports.removePaymentMethode = catchAsync(async (req, res, next) => {
+  const { user, body } = req;
+
+  if (!body.cardId) {
+    return next(
+      new AppError('Please send your card or bank account Id', CONST.FORBIDDEN)
+    );
+  }
+
+  await stripe.accounts.deleteExternalAccount(
+    user.stripeAccountId,
+    body.cardId
+  );
+
+  res.status(CONST.OK).json({
+    status: CONST.SUCCESS,
+    message: 'Successfuly removed.',
+  });
+});
+
+exports.setDefaultPaymentMethode = catchAsync(async (req, res, next) => {
+  const { user, body } = req;
+
+  if (!body.cardId) {
+    return next(
+      new AppError('Please send your card or bank account Id', CONST.FORBIDDEN)
+    );
+  }
+
+  await stripe.accounts.updateExternalAccount(
+    user.stripeAccountId,
+    body.cardId,
+    {
+      default_for_currency: true,
+    }
+  );
+
+  res.status(CONST.OK).json({
+    status: CONST.SUCCESS,
+    message: 'Successfuly set to default',
   });
 });
 

@@ -44,7 +44,7 @@ router.post(
   restrictTo(CONST.HOST_ROLE),
   hostAuth.verify
 );
-router.post(
+router.get(
   `${CONST.CONNECT_TO_STRIPE}`,
   checkLoginType,
   conditional(
@@ -56,6 +56,45 @@ router.post(
   ),
   restrictTo(CONST.HOST_ROLE),
   hostAuth.connectToStripe
+);
+router.post(
+  `${CONST.ADD_CARD}`,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.HOST_ROLE),
+  hostAuth.addDebitCard
+);
+router.post(
+  `${CONST.REMOVE_CARD}`,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.HOST_ROLE),
+  hostAuth.removePaymentMethode
+);
+router.post(
+  `${CONST.SET_DEFAULT_CARD}`,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.HOST_ROLE),
+  hostAuth.setDefaultPaymentMethode
 );
 
 router.post(CONST.SIGNIN, hostAuth.signin);

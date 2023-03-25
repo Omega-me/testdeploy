@@ -1,5 +1,4 @@
 exports.API_ROUTE = '/api/v1';
-exports.API_ROUTE2 = '/api/v2';
 exports.DEV = 'development';
 exports.PROD = 'production';
 exports.CASTERROR = 'CastError';
@@ -27,6 +26,9 @@ exports.CREATE_BOOKING_CHECKOUT = '/create-checkout';
 exports.SIGNUP = '/signup';
 exports.VERIFYACCOUNT = '/sendverificationtoken';
 exports.CONNECT_TO_STRIPE = '/connect-to-stripe';
+exports.ADD_CARD = '/add-card';
+exports.REMOVE_CARD = '/remove-card';
+exports.SET_DEFAULT_CARD = '/set-default-card';
 exports.SIGNIN = '/signin';
 exports.REFRESHUSER = '/refreshuser';
 exports.FORGOTPASSWORD = '/forgotpassword';
