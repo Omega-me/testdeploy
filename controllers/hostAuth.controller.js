@@ -264,7 +264,7 @@ exports.signin = catchAsync(async (req, res, next) => {
     );
   }
 
-  const host = await Host.findOne({ email }).select('+password');
+  const host = await Host.findOne({ email }).select('+password +isActive');
   if (!host) {
     return next(
       new AppError('E-mail or password is not correct!', CONST.BAD_REQUEST)
@@ -274,7 +274,7 @@ exports.signin = catchAsync(async (req, res, next) => {
   if (!host.isActive) {
     return next(
       new AppError(
-        'This account is blocked, to unblock it please contact the administrator.',
+        'This account is disabled and not active, to enable it please contact the administrator.',
         CONST.UNAUTHORIZED
       )
     );

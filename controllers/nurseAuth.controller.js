@@ -178,12 +178,22 @@ exports.signin = catchAsync(async (req, res, next) => {
     );
   }
 
-  const nurse = await Nurse.findOne({ email }).select('+password');
+  const nurse = await Nurse.findOne({ email }).select('+password +isActive');
   if (!nurse) {
     return next(
       new AppError('E-mail or password is not correct!', CONST.BAD_REQUEST)
     );
   }
+
+  if (!nurse.isActive) {
+    return next(
+      new AppError(
+        'This account is disabled and not active, to enable it please contact the administrator.',
+        CONST.UNAUTHORIZED
+      )
+    );
+  }
+
   if (!(await nurse.schema.methods.checkPassword(password, nurse.password))) {
     return next(
       new AppError('E-mail or password is not correct!', CONST.BAD_REQUEST)
