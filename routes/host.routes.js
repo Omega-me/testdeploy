@@ -30,7 +30,6 @@ router.post(
   restrictTo(CONST.HOST_ROLE),
   hostAuth.sendVerifyAccountEmail
 );
-
 router.post(
   `${CONST.VERIFYACCOUNT}/:verificationToken`,
   checkLoginType,
@@ -96,7 +95,6 @@ router.post(
   restrictTo(CONST.HOST_ROLE),
   hostAuth.setDefaultPaymentMethode
 );
-
 router.post(CONST.SIGNIN, hostAuth.signin);
 
 router.post(
@@ -112,7 +110,6 @@ router.post(
   restrictTo(CONST.HOST_ROLE),
   hostAuth.refresh
 );
-
 router.post(CONST.FORGOTPASSWORD, hostAuth.forgotPassword);
 
 router.post(`${CONST.RESETPASSWORD}/:token`, hostAuth.resetPassword);
@@ -130,7 +127,6 @@ router.post(
   restrictTo(CONST.HOST_ROLE),
   hostAuth.updatepassword
 );
-
 router.post(CONST.LOGOUT, hostAuth.logOut);
 
 // Subscriptions and payments
@@ -163,10 +159,77 @@ router.get(
   hostController.cancelSubscription
 );
 
+router.get(
+  CONST.ME,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.HOST_ROLE),
+  hostController.getMe,
+  hostController.getOne
+);
+router.patch(
+  CONST.UPDATE_ME_PROFIL_PICTURE,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.HOST_ROLE),
+  hostController.uploadUserPhoto,
+  hostController.resizeUserPhoto,
+  hostController.updateMe
+);
+router.patch(
+  CONST.UPDATE_ME,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.HOST_ROLE),
+  hostController.updateMe
+);
+router.delete(
+  CONST.DELETE_ME,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.HOST_ROLE),
+  hostController.deleteMe
+);
+router.post(
+  CONST.EMAIL_UPDATE,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.HOST_ROLE),
+  hostAuth.changeEmail
+);
+
 router.route('/').get(hostController.getAll);
-// .post(hostController.create);
+
 router.route('/:id').get(hostController.getOne);
-// .patch(hostController.updateOne)
-// .delete(hostController.deleteOne);
 
 module.exports = router;

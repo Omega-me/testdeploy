@@ -108,10 +108,6 @@ const nurseSchema = new mongoose.Schema(
       default: true,
       select: false,
     },
-    disabled: {
-      type: Boolean,
-      default: false,
-    },
     role: {
       type: String,
       default: CONST.NURSE_ROLE,
@@ -122,7 +118,7 @@ const nurseSchema = new mongoose.Schema(
       default: false,
     },
     stripeCustomerId: String,
-    profilPicture: String,
+    profilePicture: String,
     passwordResetToken: String,
     verificationToken: String,
     passwordChangetAt: Date,

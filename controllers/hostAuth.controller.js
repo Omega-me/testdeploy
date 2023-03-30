@@ -73,13 +73,7 @@ exports.sendVerifyAccountEmail = catchAsync(async (req, res, next) => {
 
   if (isSuccess) {
     await user.save({ validateBeforeSave: false });
-    if (process.env.NODE_ENV === CONST.DEV && !user.isVerified) {
-      return res.status(CONST.OK).json({
-        status: CONST.SUCCESS,
-        message: 'We have sent an e-mail with verification instructions.',
-      });
-    }
-    res.status(CONST.OK).json({
+    return res.status(CONST.OK).json({
       status: CONST.SUCCESS,
       message: 'We have sent an e-mail with verification instructions.',
     });
@@ -276,6 +270,16 @@ exports.signin = catchAsync(async (req, res, next) => {
       new AppError('E-mail or password is not correct!', CONST.BAD_REQUEST)
     );
   }
+
+  if (!host.isActive) {
+    return next(
+      new AppError(
+        'This account is blocked, to unblock it please contact the administrator.',
+        CONST.UNAUTHORIZED
+      )
+    );
+  }
+
   if (!(await host.schema.methods.checkPassword(password, host.password))) {
     return next(
       new AppError('E-mail or password is not correct!', CONST.BAD_REQUEST)
@@ -352,6 +356,15 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     );
   }
 
+  if (!host.isActive) {
+    return next(
+      new AppError(
+        'This account is blocked, to unblock it please contact the administrator.',
+        CONST.UNAUTHORIZED
+      )
+    );
+  }
+
   if (host.isVerified === false) {
     return next(
       new AppError('Please verify your account!', CONST.UNAUTHORIZED)
@@ -369,14 +382,6 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     ).sendPasswordReset();
     if (isSuccess) {
       await host.save({ validateBeforeSave: false });
-      if (process.env.NODE_ENV === CONST.DEV) {
-        return res.status(CONST.OK).json({
-          status: CONST.SUCCESS,
-          message:
-            'We have sent an email with instructions on how to change your password.',
-        });
-      }
-
       res.status(CONST.OK).json({
         status: CONST.SUCCESS,
         message:
@@ -444,6 +449,41 @@ exports.updatepassword = catchAsync(async (req, res, next) => {
   await host.save();
 
   sendUserTokenSuccess(host, req, res);
+});
+
+exports.changeEmail = catchAsync(async (req, res, next) => {
+  const host = req.user;
+  const { email } = req.body;
+
+  if (email === host.email) {
+    return next(
+      new AppError(
+        'Please use a different email address, this one is your actual email',
+        CONST.BAD_REQUEST
+      )
+    );
+  }
+
+  const user = await Host.findById(host._id);
+  if (!user) {
+    return next(new AppError('User does not exists.', CONST.NOT_FOUND));
+  }
+
+  user.isVerified = false;
+  user.email = email;
+
+  const verificationToken = await user.createverifyToken();
+  const isSuccess = await new Email(
+    user,
+    `${process.env.FRONTEND_URL}/verifyEmail/${verificationToken}`,
+    'E-mail sent failed, please try again latter!',
+    next
+  ).sendEmailVerification();
+
+  if (isSuccess) {
+    await user.save({ validateBeforeSave: false });
+    return sendUserTokenSuccess(user, req, res);
+  }
 });
 
 // refresh user token

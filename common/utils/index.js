@@ -32,7 +32,7 @@ exports.sendUserTokenSuccess = async (user, req, res, stausCode = CONST.OK) => {
   const token = signJWTToken(user);
 
   const jwtCookieOptions = {
-    // todo
+    // TODO: Change expire time after implementing refresh token
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
@@ -95,3 +95,203 @@ exports.generateUrl = (req) => {
     baseApiUrl,
   };
 };
+
+/**
+ *
+ * @param {*} obj
+ * @param  {...any} allowedFields
+ * @returns
+ */
+exports.filterBodyObject = (obj, ...allowedFields) => {
+  const newObj = {};
+  Object.keys(obj).forEach((el) => {
+    if (allowedFields.includes(el)) newObj[el] = obj[el];
+  });
+  return newObj;
+};
+
+/**
+ *
+ * @param {*} data
+ * @returns
+ */
+exports.createNurseDataForUpdate = (data) => {
+  let nurseData = {
+    propertyRental: {
+      workExperience: {},
+      travelingPreferences: {},
+    },
+    favouriteProperties: {},
+  };
+
+  if (data.displayName) {
+    nurseData.displayName = data.displayName;
+  }
+  if (data.firstName) {
+    nurseData.firstName = data.firstName;
+  }
+  if (data.lastName) {
+    nurseData.lastName = data.lastName;
+  }
+  if (data.phone) {
+    nurseData.phone = data.phone;
+  }
+  if (data.dateOfBirth) {
+    nurseData.dateOfBirth = data.dateOfBirth;
+  }
+  if (data.state) {
+    nurseData.state = data.state;
+  }
+  if (data.homeTown) {
+    nurseData.homeTown = data.homeTown;
+  }
+  if (data.dreamJob) {
+    nurseData.dreamJob = data.dreamJob;
+  }
+  if (data.travelWithPet) {
+    nurseData.travelWithPet = data.travelWithPet;
+  }
+  if (data.about) {
+    nurseData.about = data.about;
+  }
+  if (data.licenseType) {
+    nurseData.licenseType = data.licenseType;
+  }
+  if (data.licenseNumber) {
+    nurseData.licenseNumber = data.licenseNumber;
+  }
+
+  if (data.speciality) {
+    nurseData = {
+      ...nurseData,
+      propertyRental: {
+        ...nurseData.propertyRental,
+        workExperience: {
+          ...nurseData.propertyRental.workExperience,
+          speciality: data.speciality,
+        },
+      },
+    };
+  }
+  if (data.favouriteStateToWork) {
+    nurseData = {
+      ...nurseData,
+      propertyRental: {
+        ...nurseData.propertyRental,
+        workExperience: {
+          ...nurseData.propertyRental.workExperience,
+          favouriteStateToWork: data.favouriteStateToWork,
+        },
+      },
+    };
+  }
+  if (data.certification) {
+    nurseData = {
+      ...nurseData,
+      propertyRental: {
+        ...nurseData.propertyRental,
+        workExperience: {
+          ...nurseData.propertyRental.workExperience,
+          certification: data.certification,
+        },
+      },
+    };
+  }
+  if (data.professionalTravelingSince) {
+    nurseData = {
+      ...nurseData,
+      propertyRental: {
+        ...nurseData.propertyRental,
+        workExperience: {
+          ...nurseData.propertyRental.workExperience,
+          professionalTravelingSince: data.professionalTravelingSince,
+        },
+      },
+    };
+  }
+  if (data.current) {
+    nurseData = {
+      ...nurseData,
+      propertyRental: {
+        ...nurseData.propertyRental,
+        workExperience: {
+          ...nurseData.propertyRental.workExperience,
+          current: data.current,
+        },
+      },
+    };
+  }
+  if (data.currentEmployer) {
+    nurseData = {
+      ...nurseData,
+      propertyRental: {
+        ...nurseData.propertyRental,
+        workExperience: {
+          ...nurseData.propertyRental.workExperience,
+          currentEmployer: data.currentEmployer,
+        },
+      },
+    };
+  }
+
+  if (data.favouriteUnitType) {
+    nurseData = {
+      ...nurseData,
+      propertyRental: {
+        ...nurseData.propertyRental,
+        travelingPreferences: {
+          ...nurseData.propertyRental.travelingPreferences,
+          favouriteUnitType: data.favouriteUnitType,
+        },
+      },
+    };
+  }
+  if (data.transportationMethod) {
+    nurseData = {
+      ...nurseData,
+      propertyRental: {
+        ...nurseData.propertyRental,
+        travelingPreferences: {
+          ...nurseData.propertyRental.travelingPreferences,
+          transportationMethod: data.transportationMethod,
+        },
+      },
+    };
+  }
+  if (data.reviewAndPreferences) {
+    nurseData = {
+      ...nurseData,
+      propertyRental: {
+        ...nurseData.propertyRental,
+        reviewAndPreferences: data.reviewAndPreferences,
+      },
+    };
+  }
+  if (data.myCity) {
+    nurseData = {
+      ...nurseData,
+      favouriteProperties: {
+        ...nurseData.favouriteProperties,
+        myCity: data.myCity,
+      },
+    };
+  }
+  if (data.topThreeCities) {
+    nurseData = {
+      ...nurseData,
+      favouriteProperties: {
+        ...nurseData.favouriteProperties,
+        topThreeCities: data.topThreeCities,
+      },
+    };
+  }
+
+  return nurseData;
+};
+
+/**
+ *
+ * @param {*} obj
+ * @returns
+ */
+exports.isObjectEmpty = (obj) => Object.keys(obj).length === 0;

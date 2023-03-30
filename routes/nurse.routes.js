@@ -109,10 +109,76 @@ router.get(
   nurseController.createSubCheckoutSession
 );
 
+router.get(
+  CONST.ME,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.NURSE_ROLE),
+  nurseController.getMe,
+  nurseController.getOne
+);
+router.patch(
+  CONST.UPDATE_ME_PROFIL_PICTURE,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.NURSE_ROLE),
+  nurseController.uploadUserPhoto,
+  nurseController.resizeUserPhoto,
+  nurseController.updateMe
+);
+router.patch(
+  CONST.UPDATE_ME,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.NURSE_ROLE),
+  nurseController.updateMe
+);
+router.delete(
+  CONST.DELETE_ME,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.NURSE_ROLE),
+  nurseController.deleteMe
+);
+router.post(
+  CONST.EMAIL_UPDATE,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.NURSE_ROLE),
+  nurseAuth.changeEmail
+);
+
 router.route('/').get(nurseController.getAll);
-// .post(nurseController.create);
 router.route('/:id').get(nurseController.getOne);
-// .patch(nurseController.updateOne)
-// .delete(nurseController.deleteOne);
 
 module.exports = router;

@@ -1,13 +1,16 @@
 /* eslint-disable no-console */
-/* eslint-disable no-case-declarations */
+const fs = require('fs');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const multer = require('multer');
+const sharp = require('sharp');
 const handlerFactory = require('../common/midlewares/handlerFactory');
 const Host = require('../models/host.model');
 const SubscriptionPricing = require('../models/subscriptionsPricing.model');
 const Subscription = require('../models/subscription.model');
 const AppError = require('../common/utils/AppError');
-const CONST = require('../common/constants');
 const catchAsync = require('../common/utils/catchAsync');
+const { filterBodyObject } = require('../common/utils');
+const CONST = require('../common/constants');
 
 exports.checkValidToSubscribe = catchAsync(async (req, res, next) => {
   if (!req.user.stripeCustomerId && !req.user.stripeAccountId) {
@@ -238,6 +241,92 @@ exports.cancelSubscription = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getMe = (req, res, next) => {
+  req.params.id = req.user.id;
+  next();
+};
+
+const multerStorage = multer.memoryStorage();
+const multerFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image')) {
+    cb(null, true);
+  } else {
+    cb(
+      new AppError(
+        'Not an image! Please upload only images.',
+        CONST.BAD_REQUEST
+      ),
+      false
+    );
+  }
+};
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter,
+});
+exports.uploadUserPhoto = upload.single('profilePicture');
+exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
+  if (!req.file) return next();
+
+  const path = 'public/images/users';
+  if (!fs.existsSync(path)) {
+    fs.mkdirSync(path, {
+      recursive: true,
+    });
+  }
+
+  req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
+  await sharp(req.file.buffer)
+    .resize(500, 500)
+    .toFormat('jpeg')
+    .jpeg({ quality: 100 })
+    .toFile(`${path}/${req.file.filename}`);
+
+  next();
+});
+
+exports.updateMe = catchAsync(async (req, res, next) => {
+  if (req.body.password || req.body.passwordConfirm) {
+    return next(new AppError('Can not change password', CONST.BAD_REQUEST));
+  }
+
+  if (req.body.email) {
+    return next(new AppError('Can not change email.', CONST.BAD_REQUEST));
+  }
+
+  const filteredBody = filterBodyObject(
+    req.body,
+    'firstName',
+    'lastName',
+    'phone',
+    'dlNumber',
+    'expirationDate',
+    'state'
+  );
+  if (req.file) filteredBody.profilePicture = req.file.filename;
+
+  const updatedUser = await Host.findByIdAndUpdate(req.user.id, filteredBody, {
+    new: true,
+    runValidators: true,
+  });
+
+  res.status(CONST.OK).json({
+    status: CONST.SUCCESS,
+    data: {
+      user: updatedUser,
+    },
+  });
+});
+
+exports.deleteMe = catchAsync(async (req, res, next) => {
+  await Host.findByIdAndUpdate(req.user.id, { isActive: false });
+
+  res.status(CONST.NO_CONTENT).json({
+    status: CONST.SUCCESS,
+    data: null,
+  });
+});
+
 const hostSelectedFields = [
   '-stripeAccountId',
   '-stripeCustomerId',
@@ -247,7 +336,6 @@ const hostSelectedFields = [
   '-passwordResetExpires',
   '-refreshToken',
 ];
-exports.create = handlerFactory.createOne(Host, hostSelectedFields);
 exports.getAll = handlerFactory.getAll(Host, {
   select: hostSelectedFields,
 });
@@ -266,5 +354,3 @@ exports.getOne = handlerFactory.getOne(Host, {
   ],
   select: hostSelectedFields,
 });
-exports.updateOne = handlerFactory.updateOne(Host, hostSelectedFields);
-exports.deleteOne = handlerFactory.deleteOne(Host);

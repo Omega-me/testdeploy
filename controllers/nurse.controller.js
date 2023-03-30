@@ -1,12 +1,18 @@
-/* eslint-disable no-console */
-/* eslint-disable no-case-declarations */
+const fs = require('fs');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const multer = require('multer');
+const sharp = require('sharp');
 const handlerFactory = require('../common/midlewares/handlerFactory');
 const SubscriptionPricing = require('../models/subscriptionsPricing.model');
 const Subscription = require('../models/subscription.model');
 const catchAsync = require('../common/utils/catchAsync');
 const Nurse = require('../models/nurse.model');
 const AppError = require('../common/utils/AppError');
+const {
+  filterBodyObject,
+  createNurseDataForUpdate,
+  isObjectEmpty,
+} = require('../common/utils');
 const CONST = require('../common/constants');
 
 exports.checkValidToSubscribe = catchAsync(async (req, res, next) => {
@@ -202,6 +208,123 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getMe = (req, res, next) => {
+  req.params.id = req.user.id;
+  next();
+};
+
+const multerStorage = multer.memoryStorage();
+const multerFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image')) {
+    cb(null, true);
+  } else {
+    cb(
+      new AppError(
+        'Not an image! Please upload only images.',
+        CONST.BAD_REQUEST
+      ),
+      false
+    );
+  }
+};
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter,
+});
+exports.uploadUserPhoto = upload.single('profilePicture');
+exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
+  if (!req.file) return next();
+
+  const path = 'public/images/users';
+  if (!fs.existsSync(path)) {
+    fs.mkdirSync(path, {
+      recursive: true,
+    });
+  }
+
+  req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
+  await sharp(req.file.buffer)
+    .resize(500, 500)
+    .toFormat('jpeg')
+    .jpeg({ quality: 100 })
+    .toFile(`${path}/${req.file.filename}`);
+
+  next();
+});
+
+exports.updateMe = catchAsync(async (req, res, next) => {
+  if (req.body.password || req.body.passwordConfirm) {
+    return next(new AppError('Can not change password', CONST.BAD_REQUEST));
+  }
+
+  if (req.body.email) {
+    return next(new AppError('Can not change email.', CONST.BAD_REQUEST));
+  }
+
+  const filteredBody = filterBodyObject(
+    req.body,
+    'displayName',
+    'firstName',
+    'lastName',
+    'phone',
+    'dateOfBirth',
+    'state',
+    'homeTown',
+    'dreamJob',
+    'travelWithPet',
+    'about',
+    'speciality',
+    'favouriteStateToWork',
+    'certification',
+    'professionalTravelingSince',
+    'current',
+    'currentEmployer',
+    'favouriteUnitType',
+    'transportationMethod',
+    'reviewAndPreferences',
+    'myCity',
+    'topThreeCities',
+    'licenseType',
+    'licenseNumber'
+  );
+  const data = createNurseDataForUpdate(filteredBody);
+  if (req.file) data.profilePicture = req.file.filename;
+
+  if (isObjectEmpty(data.propertyRental.workExperience)) {
+    delete data.propertyRental.workExperience;
+  }
+  if (isObjectEmpty(data.propertyRental.travelingPreferences)) {
+    delete data.propertyRental.travelingPreferences;
+  }
+  if (isObjectEmpty(data.propertyRental)) {
+    delete data.propertyRental;
+  }
+  if (isObjectEmpty(data.favouriteProperties)) {
+    delete data.favouriteProperties;
+  }
+
+  const updatedUser = await Nurse.findByIdAndUpdate(req.user.id, data, {
+    new: true,
+    runValidators: true,
+  });
+
+  res.status(CONST.OK).json({
+    status: CONST.SUCCESS,
+    data: {
+      user: updatedUser,
+    },
+  });
+});
+
+exports.deleteMe = catchAsync(async (req, res, next) => {
+  await Nurse.findByIdAndUpdate(req.user.id, { isActive: false });
+
+  res.status(CONST.NO_CONTENT).json({
+    status: CONST.SUCCESS,
+    data: null,
+  });
+});
+
 const nurseSelectedFields = [
   '-stripeCustomerId',
   '-passwordResetToken',
@@ -210,7 +333,6 @@ const nurseSelectedFields = [
   '-passwordResetExpires',
   '-refreshToken',
 ];
-exports.create = handlerFactory.createOne(Nurse, nurseSelectedFields);
 exports.getAll = handlerFactory.getAll(Nurse, {
   select: nurseSelectedFields,
 });
@@ -229,5 +351,3 @@ exports.getOne = handlerFactory.getOne(Nurse, {
   ],
   select: nurseSelectedFields,
 });
-exports.updateOne = handlerFactory.updateOne(Nurse, nurseSelectedFields);
-exports.deleteOne = handlerFactory.deleteOne(Nurse);

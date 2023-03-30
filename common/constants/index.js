@@ -1,16 +1,17 @@
-exports.API_ROUTE = '/api/v1';
 exports.DEV = 'development';
 exports.PROD = 'production';
+
 exports.CASTERROR = 'CastError';
 exports.VALIDATIONERROR = 'ValidationError';
 exports.DUBLICATEFIELDERROR = 11000;
 exports.JSONWEBTOKENERROR = 'JsonWebTokenError';
 exports.TOKENEXPIREDERROR = 'TokenExpiredError';
+
 exports.SUCCESS = 'success';
 exports.FAIL = 'fail';
 exports.ERROR = 'error';
+
 exports.BASE = '/api/v1';
-exports.FILTER = '/filter';
 exports.PROPERTIES = 'properties';
 exports.REVIEWS = 'reviews';
 exports.SAVES = 'saves';
@@ -20,8 +21,9 @@ exports.GROUPS = 'groups';
 exports.PRICINGS = 'pricings';
 exports.SUBSCRIBTIONS = 'subscriptions';
 exports.BOOKINGS = 'bookings';
-exports.SUBSCRIBE = '/subscribe';
 exports.CANCEL = 'cancel';
+exports.SUBSCRIBE = '/subscribe';
+exports.FILTER = '/filter';
 exports.CREATE_BOOKING_CHECKOUT = '/create-checkout';
 exports.SIGNUP = '/signup';
 exports.VERIFYACCOUNT = '/sendverificationtoken';
@@ -35,17 +37,22 @@ exports.FORGOTPASSWORD = '/forgotpassword';
 exports.RESETPASSWORD = '/resetpassword';
 exports.UPDATEPASSWORD = '/updatepassword';
 exports.LOGOUT = '/logout';
-exports.DISABLEME = '/disbleme';
 exports.DISABLEACCOUNT = '/disableuser';
 exports.UPDATEUSER = '/updateuser';
 exports.UPDATEME = '/updateme';
-exports.GETME = '/me';
+exports.ME = '/me/get';
+exports.UPDATE_ME = '/me/update';
+exports.UPDATE_ME_PROFIL_PICTURE = '/me/update/profil-picture';
+exports.DELETE_ME = '/me/delete';
+exports.EMAIL_UPDATE = '/me/update/email';
 exports.GETUSER = '/getuser';
+
 exports.GET = 'get';
 exports.POST = 'post';
 exports.PUT = 'put';
 exports.PATCH = 'patch';
 exports.DELETE = 'delete';
+
 exports.OK = 200;
 exports.CREATED = 201;
 exports.ACCEPTED = 202;
@@ -65,8 +72,6 @@ exports.PRIVATE_ROOM = 'Room';
 exports.HOTEL = 'Hotel';
 exports.GROUP_RENTAL = 'Group Rental';
 exports.PETS_WELCOME = 'Pets welcome';
-exports.SUCCESS = 'success';
-exports.FAIL = 'fail';
-exports.ERROR = 'error';
+
 exports.HOST_ROLE = 'host';
 exports.NURSE_ROLE = 'nurse';

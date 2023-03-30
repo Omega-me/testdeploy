@@ -74,12 +74,6 @@ exports.sendVerifyAccountEmail = catchAsync(async (req, res, next) => {
 
   if (isSuccess) {
     await user.save({ validateBeforeSave: false });
-    if (process.env.NODE_ENV === CONST.DEV && !user.isVerified) {
-      return res.status(CONST.OK).json({
-        status: CONST.SUCCESS,
-        message: 'We have sent an e-mail with verification instructions.',
-      });
-    }
     res.status(CONST.OK).json({
       status: CONST.SUCCESS,
       message: 'We have sent an e-mail with verification instructions.',
@@ -285,14 +279,6 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     ).sendPasswordReset();
     if (isSuccess) {
       await nurse.save({ validateBeforeSave: false });
-      if (process.env.NODE_ENV === CONST.DEV) {
-        return res.status(CONST.OK).json({
-          status: CONST.SUCCESS,
-          message:
-            'We have sent an email with instructions on how to change your password.',
-        });
-      }
-
       res.status(CONST.OK).json({
         status: CONST.SUCCESS,
         message:
@@ -360,6 +346,41 @@ exports.updatepassword = catchAsync(async (req, res, next) => {
   await nurse.save();
 
   sendUserTokenSuccess(nurse, req, res);
+});
+
+exports.changeEmail = catchAsync(async (req, res, next) => {
+  const nurse = req.user;
+  const { email } = req.body;
+
+  if (email === nurse.email) {
+    return next(
+      new AppError(
+        'Please use a different email address, this one is your actual email',
+        CONST.BAD_REQUEST
+      )
+    );
+  }
+
+  const user = await Nurse.findById(nurse._id);
+  if (!user) {
+    return next(new AppError('User does not exists.', CONST.NOT_FOUND));
+  }
+
+  user.isVerified = false;
+  user.email = email;
+
+  const verificationToken = await user.createverifyToken();
+  const isSuccess = await new Email(
+    user,
+    `${process.env.FRONTEND_URL}/verifyEmail/${verificationToken}`,
+    'E-mail sent failed, please try again latter!',
+    next
+  ).sendEmailVerification();
+
+  if (isSuccess) {
+    await user.save({ validateBeforeSave: false });
+    return sendUserTokenSuccess(user, req, res);
+  }
 });
 
 // refresh user token

@@ -72,10 +72,6 @@ const hostSchema = new mongoose.Schema(
       default: true,
       select: false,
     },
-    disabled: {
-      type: Boolean,
-      default: false,
-    },
     role: {
       type: String,
       default: CONST.HOST_ROLE,
@@ -90,7 +86,7 @@ const hostSchema = new mongoose.Schema(
     responseTime: String,
     numberOfReports: Number,
     responseRate: String,
-    profilPicture: String,
+    profilePicture: String,
     passwordResetToken: String,
     verificationToken: String,
     passwordChangetAt: Date,
