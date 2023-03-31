@@ -96,6 +96,34 @@ exports.cratePropertyBookingCheckout = catchAsync(async (req, res, next) => {
   });
 });
 
+const createPropertyBookingFromWebhook = async (sessionId) => {
+  const session = await stripe.checkout.sessions.retrieve(sessionId, {
+    expand: ['payment_intent', 'customer'],
+  });
+  const lineItems = await stripe.checkout.sessions.listLineItems(sessionId, {
+    limit: 1,
+    expand: ['data.price', 'data.price.product'],
+  });
+
+  const propertyItemData = lineItems?.data[0];
+  const price = Number(propertyItemData?.amount_total) / 100;
+  const applicationFee = Math.round((price / 100) * 10);
+  const propertyId = propertyItemData?.price?.product?.metadata?.propertyId;
+  const hostId = propertyItemData?.price?.product?.metadata?.ownerId;
+
+  const bookingData = {
+    price,
+    applicationFee,
+    totalAmount: price + applicationFee,
+    payment_id: session?.payment_intent?.id,
+    nurse: session?.client_reference_id,
+    property: propertyId,
+    host: hostId,
+  };
+
+  await Booking.create(bookingData);
+};
+
 exports.listenTopropertyBookingWebhook = catchAsync(async (req, res, next) => {
   const sig = req.headers['stripe-signature'];
 
@@ -114,6 +142,7 @@ exports.listenTopropertyBookingWebhook = catchAsync(async (req, res, next) => {
   switch (event.type) {
     case 'checkout.session.completed':
       console.log(event);
+      createPropertyBookingFromWebhook(event.data.object.id);
       break;
     case 'checkout.session.expired':
       console.log('session expired');
