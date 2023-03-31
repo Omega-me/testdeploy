@@ -122,6 +122,7 @@ const createPropertyBookingFromWebhook = async (sessionId) => {
   };
 
   await Booking.create(bookingData);
+  await Property.updateOne({ _id: propertyId }, { isAvailable: false });
 };
 
 exports.listenTopropertyBookingWebhook = catchAsync(async (req, res, next) => {
@@ -171,42 +172,42 @@ exports.listenTopropertyBookingWebhook = catchAsync(async (req, res, next) => {
     recieved: true,
   });
 });
-// TODO: create booking by using stripe webhooks latter
-exports.createPropertyBooking = catchAsync(async (req, res, next) => {
-  const { sessionId } = req.params;
-  const session = await stripe.checkout.sessions.retrieve(sessionId, {
-    expand: ['payment_intent', 'customer'],
-  });
-  const lineItems = await stripe.checkout.sessions.listLineItems(sessionId, {
-    limit: 1,
-    expand: ['data.price', 'data.price.product'],
-  });
+// // TODO: create booking by using stripe webhooks latter
+// exports.createPropertyBooking = catchAsync(async (req, res, next) => {
+//   const { sessionId } = req.params;
+//   const session = await stripe.checkout.sessions.retrieve(sessionId, {
+//     expand: ['payment_intent', 'customer'],
+//   });
+//   const lineItems = await stripe.checkout.sessions.listLineItems(sessionId, {
+//     limit: 1,
+//     expand: ['data.price', 'data.price.product'],
+//   });
 
-  const propertyItemData = lineItems?.data[0];
-  const price = Number(propertyItemData?.amount_total) / 100;
-  const applicationFee = Math.round((price / 100) * 10);
-  const propertyId = propertyItemData?.price?.product?.metadata?.propertyId;
-  const hostId = propertyItemData?.price?.product?.metadata?.ownerId;
+//   const propertyItemData = lineItems?.data[0];
+//   const price = Number(propertyItemData?.amount_total) / 100;
+//   const applicationFee = Math.round((price / 100) * 10);
+//   const propertyId = propertyItemData?.price?.product?.metadata?.propertyId;
+//   const hostId = propertyItemData?.price?.product?.metadata?.ownerId;
 
-  const bookingData = {
-    price,
-    applicationFee,
-    totalAmount: price + applicationFee,
-    payment_id: session?.payment_intent?.id,
-    nurse: session?.client_reference_id,
-    property: propertyId,
-    host: hostId,
-  };
+//   const bookingData = {
+//     price,
+//     applicationFee,
+//     totalAmount: price + applicationFee,
+//     payment_id: session?.payment_intent?.id,
+//     nurse: session?.client_reference_id,
+//     property: propertyId,
+//     host: hostId,
+//   };
 
-  const booking = await Booking.create(bookingData);
+//   const booking = await Booking.create(bookingData);
 
-  res.status(CONST.OK).json({
-    status: CONST.SUCCESS,
-    data: {
-      booking,
-    },
-  });
-});
+//   res.status(CONST.OK).json({
+//     status: CONST.SUCCESS,
+//     data: {
+//       booking,
+//     },
+//   });
+// });
 
 exports.checkIn = catchAsync(async (req, res, next) => {
   const { bookingId } = req.params;
@@ -246,7 +247,6 @@ exports.checkIn = catchAsync(async (req, res, next) => {
     runValidators: true,
   });
 
-  property.isAvailable = false;
   property.availableFrom = moment(futureMonth).format();
   await property.save({ validateBeforeSave: false });
 
