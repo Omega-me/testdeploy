@@ -11,6 +11,7 @@ const AppError = require('../common/utils/AppError');
 const catchAsync = require('../common/utils/catchAsync');
 const { filterBodyObject } = require('../common/utils');
 const CONST = require('../common/constants');
+const Property = require('../models/property.model');
 
 exports.checkValidToSubscribe = catchAsync(async (req, res, next) => {
   if (!req.user.stripeCustomerId && !req.user.stripeAccountId) {
@@ -319,7 +320,10 @@ exports.updateMe = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteMe = catchAsync(async (req, res, next) => {
-  await Host.findByIdAndUpdate(req.user.id, { isActive: false });
+  const host = await Host.findByIdAndUpdate(req.user.id, { isActive: false });
+
+  // deactivate all properties TODO: set it to false in the end
+  await Property.updateMany({ host: host.id }, { isActive: true });
 
   res.status(CONST.NO_CONTENT).json({
     status: CONST.SUCCESS,

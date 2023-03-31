@@ -70,7 +70,6 @@ const hostSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
-      select: false,
     },
     role: {
       type: String,

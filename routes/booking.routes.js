@@ -23,12 +23,48 @@ router.get(
   bookingController.checkPropertyExistsAndValid,
   bookingController.cratePropertyBookingCheckout
 );
+router.get(
+  `${CONST.CREATE_BOOKING}/:sessionId`,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.NURSE_ROLE),
+  bookingController.createPropertyBooking
+);
+router.patch(
+  `${CONST.CREATE_BOOKING}${CONST.CHECK_IN}/:bookingId`,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.HOST_ROLE),
+  bookingController.createCheckin
+);
+router.patch(
+  `${CONST.CREATE_BOOKING}${CONST.CHECK_OUT}/:bookingId`,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.HOST_ROLE),
+  bookingController.createCheckOut
+);
 
 router.post(CONST.FILTER, bookingController.filter);
 router.route('/').get(bookingController.getAll);
-// .post(bookingController.create);
 router.route('/:id').get(bookingController.getOne);
-// .patch(bookingController.updateOne)
-// .delete(bookingController.deleteOne);
 
 module.exports = router;

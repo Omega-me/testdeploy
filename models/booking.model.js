@@ -6,17 +6,19 @@ const bookingSchema = new mongoose.Schema(
       type: Number,
       require: [true, 'Booking must have a price!'],
     },
-    startDate: {
+    applicationFee: {
       type: Number,
-      required: [true, 'Booking must have a duration!'],
+      required: true,
     },
-    endDate: {
+    totalAmount: {
       type: Number,
-      required: [true, 'Booking must have a duration!'],
+      required: true,
     },
+    checkInDate: Date,
+    checkOutDate: Date,
     status: {
       type: String,
-      enum: ['pending', 'paid', 'cancelled'],
+      enum: ['pending', 'paid'],
       default: 'pending',
     },
     payment_id: {
@@ -26,19 +28,24 @@ const bookingSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       required: true,
-      default: true,
+      default: false,
     },
 
     // relations
     nurse: {
       type: mongoose.Schema.ObjectId,
       ref: 'Nurse',
-      required: [true, 'A booking must have been made by a nurse!'],
+      required: [true, 'A booking must have been made by a nurse.'],
+    },
+    host: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Host',
+      required: [true, 'A booking must have been made by a host included.'],
     },
     property: {
       type: mongoose.Schema.ObjectId,
       ref: 'Property',
-      required: [true, 'A booking must have a property!'],
+      required: [true, 'A booking must have a property.'],
     },
   },
   {

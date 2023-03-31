@@ -172,15 +172,12 @@ const propertySchema = new mongoose.Schema(
       type: String,
       required: [true, 'Property must have a description!'],
     },
-    availableFrom: {
-      type: Date,
-      required: true,
-    },
-    availableTo: {
-      type: Date,
-      required: true,
-    },
+    availableFrom: Date,
     isAvailable: {
+      type: Boolean,
+      default: true,
+    },
+    isActive: {
       type: Boolean,
       default: true,
     },
