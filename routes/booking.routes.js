@@ -10,7 +10,7 @@ const CONST = require('../common/constants');
 const router = Router();
 
 router.get(
-  `${CONST.CREATE_BOOKING_CHECKOUT}/:propertyId`,
+  `${CONST.CREATE_BOOKING_CHECKOUT_SESSION}/:propertyId`,
   checkLoginType,
   conditional(
     function (req, res, next) {
