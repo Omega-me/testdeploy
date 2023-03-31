@@ -47,7 +47,7 @@ router.patch(
     hostAuth.protect
   ),
   restrictTo(CONST.HOST_ROLE),
-  bookingController.createCheckin
+  bookingController.checkIn
 );
 router.patch(
   `${CONST.CREATE_BOOKING}${CONST.CHECK_OUT}/:bookingId`,
@@ -60,7 +60,7 @@ router.patch(
     hostAuth.protect
   ),
   restrictTo(CONST.HOST_ROLE),
-  bookingController.createCheckOut
+  bookingController.checkOut
 );
 
 router.post(CONST.FILTER, bookingController.filter);

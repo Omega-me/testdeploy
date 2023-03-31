@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable import/no-extraneous-dependencies */
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const moment = require('moment');
@@ -95,6 +96,52 @@ exports.cratePropertyBookingCheckout = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.listenTopropertyBookingWebhook = catchAsync(async (req, res, next) => {
+  const sig = req.headers['stripe-signature'];
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_PROPERTY_BOOKING_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    return res.status(CONST.BAD_REQUEST).send(`Webhook Error: ${err.message}`);
+  }
+
+  switch (event.type) {
+    case 'checkout.session.completed':
+      console.log(event);
+      break;
+    case 'checkout.session.expired':
+      console.log('session expired');
+      break;
+    case 'customer.subscription.created':
+      console.log('susbcription created');
+      // send email to notify user for subscription
+      break;
+    case 'customer.subscription.deleted':
+      console.log('susbcripton deleted');
+      break;
+    case 'customer.subscription.paused':
+      console.log('susbcripton paused');
+      break;
+    case 'customer.subscription.resumed':
+      console.log('susbcripton resumed');
+      break;
+    case 'customer.subscription.updated':
+      console.log('susbcripton updated');
+      break;
+    default:
+      console.log(`Unhandled event type ${event.type}`);
+  }
+
+  res.status(CONST.OK).json({
+    recieved: true,
+  });
+});
 // TODO: create booking by using stripe webhooks latter
 exports.createPropertyBooking = catchAsync(async (req, res, next) => {
   const { sessionId } = req.params;
@@ -132,7 +179,7 @@ exports.createPropertyBooking = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createCheckin = catchAsync(async (req, res, next) => {
+exports.checkIn = catchAsync(async (req, res, next) => {
   const { bookingId } = req.params;
 
   const booking = await Booking.findById(bookingId);
@@ -182,7 +229,7 @@ exports.createCheckin = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createCheckOut = catchAsync(async (req, res, next) => {
+exports.checkOut = catchAsync(async (req, res, next) => {
   const { bookingId } = req.params;
 
   const booking = await Booking.findById(bookingId);
