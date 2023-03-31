@@ -127,7 +127,9 @@ const createPropertyBookingFromWebhook = async (sessionId) => {
   };
 
   await Booking.create(bookingData);
-  await Property.findByIdAndUpdate(propertyId, { isAvailable: false });
+  const property = await Property.findById(propertyId);
+  property.isAvailable = false;
+  await property.save({ validateBeforeSave: true });
 };
 
 exports.listenTopropertyBookingWebhook = catchAsync(async (req, res, next) => {
@@ -161,7 +163,6 @@ exports.listenTopropertyBookingWebhook = catchAsync(async (req, res, next) => {
     recieved: true,
   });
 });
-// // TODO: create booking by using stripe webhooks latter
 // exports.createPropertyBooking = catchAsync(async (req, res, next) => {
 //   const { sessionId } = req.params;
 //   const session = await stripe.checkout.sessions.retrieve(sessionId, {
