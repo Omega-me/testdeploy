@@ -348,6 +348,10 @@ exports.getOne = handlerFactory.getOne(Nurse, {
         '-customerId',
       ],
     },
+    {
+      path: 'bookings',
+      select: ['-payment_id', '-__v'],
+    },
   ],
   select: nurseSelectedFields,
 });

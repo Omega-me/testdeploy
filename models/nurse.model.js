@@ -147,11 +147,6 @@ nurseSchema.virtual('bookings', {
   foreignField: 'nurse',
   localField: '_id',
 });
-nurseSchema.virtual('payments', {
-  ref: 'NursePayment',
-  foreignField: 'nurse',
-  localField: '_id',
-});
 // /////////////////////////////////////
 
 // pre save middlewaree for changing passwordChangetAt field to the date where password is changed

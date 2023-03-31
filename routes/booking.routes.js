@@ -23,19 +23,6 @@ router.get(
   bookingController.checkPropertyExistsAndValid,
   bookingController.cratePropertyBookingCheckout
 );
-// router.get(
-//   `${CONST.CREATE_BOOKING}/:sessionId`,
-//   checkLoginType,
-//   conditional(
-//     function (req, res, next) {
-//       return req.role === CONST.NURSE_ROLE;
-//     },
-//     nurseAuth.protect,
-//     hostAuth.protect
-//   ),
-//   restrictTo(CONST.NURSE_ROLE),
-//   bookingController.createPropertyBooking
-// );
 router.patch(
   `${CONST.CREATE_BOOKING}${CONST.CHECK_IN}/:bookingId`,
   checkLoginType,
