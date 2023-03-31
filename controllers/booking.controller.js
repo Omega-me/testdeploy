@@ -51,6 +51,11 @@ exports.checkPropertyExistsAndValid = catchAsync(async (req, res, next) => {
 exports.cratePropertyBookingCheckout = catchAsync(async (req, res, next) => {
   const { property, owner } = req;
 
+  let successUrl = `${process.env.FRONTEND_URL}?sessionId={CHECKOUT_SESSION_ID}`;
+  if (process.env.NODE_ENV === CONST.PROD) {
+    successUrl = process.env.FRONTEND_URL;
+  }
+
   const session = await stripe.checkout.sessions.create({
     line_items: [
       {
@@ -73,7 +78,7 @@ exports.cratePropertyBookingCheckout = catchAsync(async (req, res, next) => {
       },
     ],
     mode: 'payment',
-    success_url: `${process.env.FRONTEND_URL}?sessionId={CHECKOUT_SESSION_ID}`,
+    success_url: successUrl,
     cancel_url: process.env.FRONTEND_URL,
     client_reference_id: req.user.id,
     currency: 'usd',
@@ -122,7 +127,7 @@ const createPropertyBookingFromWebhook = async (sessionId) => {
   };
 
   await Booking.create(bookingData);
-  await Property.updateOne({ _id: propertyId }, { isAvailable: false });
+  await Property.findByIdAndUpdate(propertyId, { isAvailable: false });
 };
 
 exports.listenTopropertyBookingWebhook = catchAsync(async (req, res, next) => {
@@ -147,22 +152,6 @@ exports.listenTopropertyBookingWebhook = catchAsync(async (req, res, next) => {
       break;
     case 'checkout.session.expired':
       console.log('session expired');
-      break;
-    case 'customer.subscription.created':
-      console.log('susbcription created');
-      // send email to notify user for subscription
-      break;
-    case 'customer.subscription.deleted':
-      console.log('susbcripton deleted');
-      break;
-    case 'customer.subscription.paused':
-      console.log('susbcripton paused');
-      break;
-    case 'customer.subscription.resumed':
-      console.log('susbcripton resumed');
-      break;
-    case 'customer.subscription.updated':
-      console.log('susbcripton updated');
       break;
     default:
       console.log(`Unhandled event type ${event.type}`);
