@@ -1,5 +1,7 @@
 'use-strict';
 
+/* eslint-disable import/no-extraneous-dependencies */
+
 // core mdoules
 const path = require('path');
 // npm modules
@@ -12,6 +14,7 @@ const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
+const compression = require('compression');
 
 // my modules
 const CONST = require('../common/constants');
@@ -37,21 +40,16 @@ const nurseController = require('../controllers/nurse.controller');
 
 // init app
 const app = express();
-// const limiter = rateLimit({
-//     max: 100,
-//     windowMs: 60 * 60 * 1000,
-//     message: 'To many request from this IP, please try again in one hour!',
-// });
+app.enable('trust proxy');
 
 // middlewares
-app.use(helmet()); // set security HTTP headers
+app.use(cors({ origin: true, credentials: true }));
+app.options('*', cors());
 process.env.NODE_ENV === 'development' && app.use(logger('dev'));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../views'));
-app.use(cors({ origin: true, credentials: true }));
-// app.use(`${CONST.API_ROUTE}/${CONST.USERS}`, limiter); // limit requests from the same api
 app.use('/public', express.static(path.join(__dirname, '../public')));
-// Stripe webhook endpoints
+app.use(helmet());
 app.use(
   '/property-boooking-webhook',
   express.raw({ type: 'application/json' }),
@@ -73,9 +71,10 @@ app.use(
   mongoSanitize({
     allowDots: true,
   })
-); // Data sanitization againts NsSQL injection
-app.use(xss()); // Data sanitization againts XSS
-app.use(hpp()); // Prevent parameterr pollution
+);
+app.use(xss());
+app.use(hpp());
+app.use(compression());
 
 // routes
 app.get('/', (req, res) => {
