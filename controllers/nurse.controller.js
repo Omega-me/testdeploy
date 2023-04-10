@@ -119,8 +119,12 @@ exports.createSubCheckoutSession = catchAsync(async (req, res, next) => {
   });
 });
 
-const createSubscriptionBooking = async (event) => {
-  const nurse = await Nurse.findById(event.data.object.client_reference_id);
+const createSubscriptionBooking = async (sessionId) => {
+  const session = await stripe.checkout.sessions.retrieve(sessionId, {
+    expand: ['payment_intent', 'customer'],
+  });
+
+  const nurse = await Nurse.findById(session.client_reference_id);
 
   const subscriptionPricing = await SubscriptionPricing.find({
     userRole: 'Nurse',
