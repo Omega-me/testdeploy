@@ -108,6 +108,19 @@ router.post(
   nurseController.createSubscriptionPlan,
   nurseController.createSubCheckoutSession
 );
+router.post(
+  '/subscription-booking-test',
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.NURSE_ROLE),
+  nurseController.createSubscriptionBookingTestSolution
+);
 
 router.get(
   CONST.ME,

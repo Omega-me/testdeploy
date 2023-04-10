@@ -159,6 +159,19 @@ router.post(
   hostController.createSubCheckoutSession
 );
 router.post(
+  '/subscription-booking-test',
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.HOST_ROLE),
+  hostController.createSubscriptionBookingTestSolution
+);
+router.post(
   `${CONST.SUBSCRIBE}/${CONST.CANCEL}`,
   checkLoginType,
   conditional(

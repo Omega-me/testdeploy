@@ -80,10 +80,15 @@ exports.createSubscriptionPlan = catchAsync(async (req, res, next) => {
 });
 
 exports.createSubCheckoutSession = catchAsync(async (req, res, next) => {
+  let successUrl = `${process.env.FRONTEND_URL}?sessionId={CHECKOUT_SESSION_ID}`;
+  if (process.env.NODE_ENV === CONST.PROD) {
+    successUrl = process.env.FRONTEND_URL;
+  }
+
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     cancel_url: process.env.FRONTEND_URL,
-    success_url: process.env.FRONTEND_URL,
+    success_url: successUrl,
     currency: req.price.currency,
     customer: req.user.stripeCustomerId,
     client_reference_id: req.user.id,
@@ -104,11 +109,14 @@ exports.createSubCheckoutSession = catchAsync(async (req, res, next) => {
   });
 });
 
-const createSubscriptionBooking = async (event) => {
-  const host = await Host.findById(event.data.object.client_reference_id);
+const createSubscriptionBooking = async (sessionId) => {
+  const session = await stripe.checkout.sessions.retrieve(sessionId, {
+    expand: ['payment_intent', 'customer'],
+  });
+  const host = await Host.findById(session.client_reference_id);
 
   const subscription = await stripe.subscriptions.retrieve(
-    event.data.object.subscription
+    session.subscription
   );
 
   let defaultPayment;
@@ -179,6 +187,76 @@ const deleteSubscriptionBooking = async (event) => {
   await host.save({ validateBeforeSave: false });
 };
 
+exports.createSubscriptionBookingTestSolution = catchAsync(
+  async (req, res, next) => {
+    const { sessionId } = req.query;
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ['payment_intent', 'customer'],
+    });
+    const host = await Host.findById(session.client_reference_id);
+
+    const subscription = await stripe.subscriptions.retrieve(
+      session.subscription
+    );
+
+    let defaultPayment;
+    if (subscription) {
+      defaultPayment = await stripe.paymentMethods.retrieve(
+        subscription.default_payment_method
+      );
+    }
+
+    const subscriptionBookingData = {
+      subscriptionId: subscription.id,
+      subscriptionPlanId: subscription.plan.id,
+      subscriptionStatus: subscription.status,
+      priceAmount: subscription.plan.amount / 100,
+      currency: subscription.plan.currency,
+      productId: subscription.plan.product,
+      customerId: subscription.customer,
+      userId: host._id,
+      customerRole: host.role,
+      latestInvoiceId: subscription.latest_invoice,
+      email: defaultPayment.billing_details.email,
+      name: defaultPayment.billing_details.name,
+      brand: defaultPayment.card.brand,
+      country: defaultPayment.card.country,
+      expMonth: defaultPayment.card.exp_month,
+      expYear: defaultPayment.card.exp_year,
+      funding: defaultPayment.card.funding,
+      last4: defaultPayment.card.last4,
+      created: new Date(defaultPayment.created * 1000),
+      type: defaultPayment.type,
+      oneTimeSubscription: false,
+      startedAt: new Date(subscription.current_period_start * 1000),
+      endsAt: new Date(subscription.current_period_end * 1000),
+    };
+
+    // Create a subscription booking
+    const foundedSubsciptionBooking = await Subscription.find({
+      userId: host._id,
+    });
+
+    if (foundedSubsciptionBooking.length > 0) {
+      await Subscription.findByIdAndDelete(foundedSubsciptionBooking[0]._id);
+    }
+
+    const subscriptionBooking = await Subscription.create(
+      subscriptionBookingData
+    );
+
+    // update host
+    host.isSubscriber = true;
+    host.subscription = subscriptionBooking._id;
+    await host.save({ validateBeforeSave: false });
+
+    res.status(CONST.OK).json({
+      status: CONST.SUCCESS,
+      data: { session, host },
+    });
+  }
+);
+
 exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
   const sig = req.headers['stripe-signature'];
 
@@ -196,7 +274,7 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
 
   switch (event.type) {
     case 'checkout.session.completed':
-      createSubscriptionBooking(event);
+      createSubscriptionBooking(event.data.object.id);
       break;
     case 'checkout.session.expired':
       console.log('session expired');
@@ -233,6 +311,7 @@ exports.cancelSubscription = catchAsync(async (req, res, next) => {
       new AppError('This user is not a subscriber.', CONST.FORBIDDEN)
     );
   }
+
   const susbcription = await Subscription.findById(req.user.subscription);
   await stripe.subscriptions.del(susbcription.subscriptionId);
 
@@ -243,7 +322,7 @@ exports.cancelSubscription = catchAsync(async (req, res, next) => {
 });
 
 exports.getMe = (req, res, next) => {
-  req.params.id = req.user.id;
+  req.params.id = req.user._id;
   req.query.populate = 'properties';
   next();
 };
@@ -277,7 +356,7 @@ exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
     });
   }
 
-  req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
+  req.file.filename = `user-${req.user._id}-${Date.now()}.jpeg`;
   await sharp(req.file.buffer)
     .resize(500, 500)
     .toFormat('jpeg')
@@ -307,7 +386,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
   );
   if (req.file) filteredBody.profilePicture = req.file.filename;
 
-  const updatedUser = await Host.findByIdAndUpdate(req.user.id, filteredBody, {
+  const updatedUser = await Host.findByIdAndUpdate(req.user._id, filteredBody, {
     new: true,
     runValidators: true,
   });
@@ -321,10 +400,10 @@ exports.updateMe = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteMe = catchAsync(async (req, res, next) => {
-  const host = await Host.findByIdAndUpdate(req.user.id, { isActive: false });
+  const host = await Host.findByIdAndUpdate(req.user._id, { isActive: false });
 
   // deactivate all properties TODO: set it to false in the end
-  await Property.updateMany({ host: host.id }, { isActive: true });
+  await Property.updateMany({ host: host._id }, { isActive: true });
 
   res.status(CONST.NO_CONTENT).json({
     status: CONST.SUCCESS,
@@ -333,6 +412,8 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
 });
 
 const hostSelectedFields = [
+  '-stripeAccountId',
+  '-stripeCustomerId',
   '-passwordResetToken',
   '-verificationToken',
   '-passwordChangetAt',

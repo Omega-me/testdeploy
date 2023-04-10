@@ -90,10 +90,15 @@ exports.createSubscriptionPlan = catchAsync(async (req, res, next) => {
 });
 
 exports.createSubCheckoutSession = catchAsync(async (req, res, next) => {
+  let successUrl = `${process.env.FRONTEND_URL}?sessionId={CHECKOUT_SESSION_ID}`;
+  if (process.env.NODE_ENV === CONST.PROD) {
+    successUrl = process.env.FRONTEND_URL;
+  }
+
   const session = await stripe.checkout.sessions.create({
     mode: 'payment',
     cancel_url: process.env.FRONTEND_URL,
-    success_url: process.env.FRONTEND_URL,
+    success_url: successUrl,
     currency: req.price.currency,
     customer: req.user.stripeCustomerId,
     client_reference_id: req.user.id,
@@ -114,7 +119,7 @@ exports.createSubCheckoutSession = catchAsync(async (req, res, next) => {
   });
 });
 
-const createSubscriptionBookingProd = async (event) => {
+const createSubscriptionBooking = async (event) => {
   const nurse = await Nurse.findById(event.data.object.client_reference_id);
 
   const subscriptionPricing = await SubscriptionPricing.find({
@@ -184,6 +189,90 @@ const createSubscriptionBookingProd = async (event) => {
   await nurse.save({ validateBeforeSave: false });
 };
 
+exports.createSubscriptionBookingTestSolution = catchAsync(
+  async (req, res, next) => {
+    const { sessionId } = req.query;
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ['payment_intent', 'customer'],
+    });
+
+    const nurse = await Nurse.findById(session.client_reference_id);
+
+    const subscriptionPricing = await SubscriptionPricing.find({
+      userRole: 'Nurse',
+    });
+
+    const charges = await stripe.charges.list({
+      customer: nurse.stripeCustomerId,
+      limit: 1,
+    });
+    let charge;
+    if (charges.data[0]) {
+      charge = charges.data[0];
+    }
+
+    let defaultPayment;
+    if (charge) {
+      defaultPayment = await stripe.paymentMethods.retrieve(
+        charge.payment_method
+      );
+    }
+
+    const plan = await stripe.plans.retrieve(
+      subscriptionPricing[0].stripePlanId
+    );
+
+    const subscriptionBookingData = {
+      subscriptionId: charge.id,
+      subscriptionproductId: plan.id,
+      subscriptionStatus: 'active',
+      priceAmount: charge.amount / 100,
+      currency: charge.currency,
+      productId: plan.product,
+      customerId: charge.customer,
+      userId: nurse._id,
+      customerRole: nurse.role,
+      latestInvoiceId: charge.invoice,
+      email: defaultPayment.billing_details.email,
+      name: defaultPayment.billing_details.name,
+      brand: defaultPayment.card.brand,
+      country: defaultPayment.card.country,
+      expMonth: defaultPayment.card.exp_month,
+      expYear: defaultPayment.card.exp_year,
+      funding: defaultPayment.card.funding,
+      last4: defaultPayment.card.last4,
+      created: new Date(defaultPayment.created * 1000),
+      type: defaultPayment.type,
+      oneTimeSubscription: true,
+      startedAt: new Date(charge.created * 1000),
+      endsAt: new Date('9999-12-31T23:59:59'),
+    };
+
+    // // Create a subscription booking
+    const foundedSubsciptionBooking = await Subscription.find({
+      userId: nurse._id,
+    });
+
+    if (foundedSubsciptionBooking.length > 0) {
+      await Subscription.findByIdAndDelete(foundedSubsciptionBooking[0]._id);
+    }
+
+    const subscriptionBooking = await Subscription.create(
+      subscriptionBookingData
+    );
+
+    // update user and make it subscriber
+    nurse.isSubscriber = true;
+    nurse.subscription = subscriptionBooking._id;
+    await nurse.save({ validateBeforeSave: false });
+
+    res.status(CONST.OK).json({
+      status: CONST.SUCCESS,
+      data: { session, nurse },
+    });
+  }
+);
+
 exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
   const sig = req.headers['stripe-signature'];
 
@@ -200,7 +289,7 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
   }
 
   if (event.type === 'checkout.session.completed') {
-    createSubscriptionBookingProd(event);
+    createSubscriptionBooking(event.data.object.id);
   }
 
   res.status(CONST.OK).json({
@@ -209,7 +298,7 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
 });
 
 exports.getMe = (req, res, next) => {
-  req.params.id = req.user.id;
+  req.params.id = req.user._id;
   req.query.populate = [
     'reviews',
     {
@@ -249,7 +338,7 @@ exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
     });
   }
 
-  req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
+  req.file.filename = `user-${req.user._id}-${Date.now()}.jpeg`;
   await sharp(req.file.buffer)
     .resize(500, 500)
     .toFormat('jpeg')
@@ -310,7 +399,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     delete data.favouriteProperties;
   }
 
-  const updatedUser = await Nurse.findByIdAndUpdate(req.user.id, data, {
+  const updatedUser = await Nurse.findByIdAndUpdate(req.user._id, data, {
     new: true,
     runValidators: true,
   });
@@ -324,7 +413,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteMe = catchAsync(async (req, res, next) => {
-  await Nurse.findByIdAndUpdate(req.user.id, { isActive: false });
+  await Nurse.findByIdAndUpdate(req.user._id, { isActive: false });
 
   res.status(CONST.NO_CONTENT).json({
     status: CONST.SUCCESS,
