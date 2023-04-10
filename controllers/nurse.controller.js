@@ -210,6 +210,13 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
 
 exports.getMe = (req, res, next) => {
   req.params.id = req.user.id;
+  req.query.populate = [
+    'reviews',
+    {
+      path: 'bookings',
+      select: ['-payment_id', '-__v'],
+    },
+  ];
   next();
 };
 
@@ -326,7 +333,6 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
 });
 
 const nurseSelectedFields = [
-  '-stripeCustomerId',
   '-passwordResetToken',
   '-verificationToken',
   '-passwordChangetAt',
@@ -338,7 +344,6 @@ exports.getAll = handlerFactory.getAll(Nurse, {
 });
 exports.getOne = handlerFactory.getOne(Nurse, {
   populate: [
-    'reviews',
     {
       path: 'subscription',
       select: [
@@ -347,10 +352,6 @@ exports.getOne = handlerFactory.getOne(Nurse, {
         '-productId',
         '-customerId',
       ],
-    },
-    {
-      path: 'bookings',
-      select: ['-payment_id', '-__v'],
     },
   ],
   select: nurseSelectedFields,

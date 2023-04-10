@@ -116,6 +116,10 @@ const nurseSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isConnected: {
+      type: Boolean,
+      default: false,
+    },
     stripeCustomerId: String,
     profilePicture: String,
     passwordResetToken: String,

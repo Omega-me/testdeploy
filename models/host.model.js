@@ -80,6 +80,10 @@ const hostSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isConnected: {
+      type: Boolean,
+      default: false,
+    },
     stripeAccountId: String,
     stripeCustomerId: String,
     responseTime: String,

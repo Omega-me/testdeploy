@@ -82,6 +82,19 @@ router.post(
   restrictTo(CONST.HOST_ROLE),
   hostAuth.removePaymentMethode
 );
+router.get(
+  `${CONST.GET_PAYMENT_METHODES}`,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.HOST_ROLE),
+  hostAuth.getStripePaymentMethods
+);
 router.post(
   `${CONST.SET_DEFAULT_CARD}`,
   checkLoginType,
@@ -130,7 +143,7 @@ router.post(
 router.post(CONST.LOGOUT, hostAuth.logOut);
 
 // Subscriptions and payments
-router.get(
+router.post(
   CONST.SUBSCRIBE,
   checkLoginType,
   conditional(
@@ -145,7 +158,7 @@ router.get(
   hostController.createSubscriptionPlan,
   hostController.createSubCheckoutSession
 );
-router.get(
+router.post(
   `${CONST.SUBSCRIBE}/${CONST.CANCEL}`,
   checkLoginType,
   conditional(

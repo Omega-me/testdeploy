@@ -166,6 +166,7 @@ exports.connectToStripe = catchAsync(async (req, res, next) => {
     collect: 'eventually_due',
   });
 
+  user.isConnected = true;
   await user.save({ validateBeforeSave: false });
 
   res.status(CONST.OK).json({
@@ -203,8 +204,6 @@ exports.addDebitCard = catchAsync(async (req, res, next) => {
   await stripe.accounts.createExternalAccount(user.stripeAccountId, {
     external_account: cardToken.id,
   });
-
-  await stripe.accounts.retrieve(user.stripeAccountId);
 
   res.status(CONST.OK).json({
     status: CONST.SUCCESS,
@@ -252,6 +251,24 @@ exports.setDefaultPaymentMethode = catchAsync(async (req, res, next) => {
   res.status(CONST.OK).json({
     status: CONST.SUCCESS,
     message: 'Successfuly set to default',
+  });
+});
+
+exports.getStripePaymentMethods = catchAsync(async (req, res, next) => {
+  if (!req.user.stripeAccountId) {
+    return next(
+      new AppError(
+        'Please connect your account to stripe first',
+        CONST.FORBIDDEN
+      )
+    );
+  }
+
+  const account = await stripe.accounts.retrieve(req.user.stripeAccountId);
+
+  res.status(CONST.OK).json({
+    status: CONST.SUCCESS,
+    data: { paymentMethodes: account.external_accounts.data },
   });
 });
 

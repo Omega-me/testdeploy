@@ -116,6 +116,7 @@ exports.verify = catchAsync(async (req, res, next) => {
     name: customerName,
   });
   nurse.stripeCustomerId = customer.id;
+  nurse.isConnected = true;
 
   await nurse.save({ validateBeforeSave: false });
 
@@ -158,6 +159,7 @@ exports.connectToStripe = catchAsync(async (req, res, next) => {
     name: customerName,
   });
   user.stripeCustomerId = customer.id;
+  user.isConnected = true;
 
   await user.save({ validateBeforeSave: false });
 

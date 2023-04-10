@@ -78,8 +78,16 @@ exports.createOne = (Model, select) =>
 exports.getOne = (Model, options) =>
   catchAsync(async (req, res, next) => {
     const { id } = req.params;
-
+    const { populate } = req.query;
+    const { select } = req.query;
     let query = Model.findById(id);
+
+    if (populate) {
+      query = query.populate(populate);
+    }
+    if (select) {
+      query = query.select(select);
+    }
     if (options) {
       if (options.populate) query = query.populate(options.populate);
       if (options.select) query = query.select(options.select);
@@ -106,6 +114,7 @@ exports.getAll = (Model, options) =>
   catchAsync(async (req, res, next) => {
     const data = await Model.find();
     let queryData = Model.find();
+
     if (options) {
       if (options.populate) queryData = queryData.populate(options.populate);
       if (options.select) queryData = queryData.select(options.select);
@@ -137,6 +146,7 @@ exports.getAll = (Model, options) =>
 exports.filter = (Model, options) =>
   catchAsync(async (req, res, next) => {
     let queryData = Model.find();
+
     if (options) {
       if (options.populate) queryData = queryData.populate(options.populate);
       if (options.select) queryData = queryData.select(options.select);

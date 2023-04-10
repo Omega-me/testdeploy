@@ -43,7 +43,7 @@ router.post(
   nurseAuth.verify
 );
 
-router.post(
+router.get(
   `${CONST.CONNECT_TO_STRIPE}`,
   checkLoginType,
   conditional(
@@ -93,7 +93,7 @@ router.post(
 router.post(CONST.LOGOUT, nurseAuth.logOut);
 
 // Subscriptions and payments
-router.get(
+router.post(
   CONST.SUBSCRIBE,
   checkLoginType,
   conditional(

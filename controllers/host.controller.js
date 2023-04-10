@@ -244,6 +244,7 @@ exports.cancelSubscription = catchAsync(async (req, res, next) => {
 
 exports.getMe = (req, res, next) => {
   req.params.id = req.user.id;
+  req.query.populate = 'properties';
   next();
 };
 
@@ -345,7 +346,6 @@ exports.getAll = handlerFactory.getAll(Host, {
 });
 exports.getOne = handlerFactory.getOne(Host, {
   populate: [
-    'properties',
     {
       path: 'subscription',
       select: [
