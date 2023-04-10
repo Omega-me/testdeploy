@@ -333,8 +333,6 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
 });
 
 const hostSelectedFields = [
-  '-stripeAccountId',
-  '-stripeCustomerId',
   '-passwordResetToken',
   '-verificationToken',
   '-passwordChangetAt',
