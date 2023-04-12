@@ -3,6 +3,10 @@ const Property = require('./property.model');
 
 const bookingRequestSchema = new mongoose.Schema(
   {
+    submitted: {
+      type: Date,
+      value: Date.now(),
+    },
     travelingFrom: {
       type: Date,
       required: true,
