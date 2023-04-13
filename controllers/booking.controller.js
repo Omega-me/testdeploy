@@ -8,10 +8,30 @@ const CONST = require('../common/constants');
 const Booking = require('../models/booking.model');
 const Property = require('../models/property.model');
 const Host = require('../models/host.model');
+const BookingRequest = require('../models/bookingRequest.model');
 
 exports.checkPropertyExistsAndValid = catchAsync(async (req, res, next) => {
-  const { propertyId } = req.params;
+  const { bookingRequestId } = req.params;
 
+  const bookingRequest = await BookingRequest.findById(bookingRequestId);
+  if (!bookingRequest) {
+    return next(
+      new AppError(`No such request for booking exists`, CONST.BAD_REQUEST)
+    );
+  }
+  if (bookingRequest.isArchived) {
+    return next(new AppError(`This request is archived`, CONST.BAD_REQUEST));
+  }
+  if (!bookingRequest.isArchived && bookingRequest.status !== 'Approved') {
+    return next(
+      new AppError(
+        `This request is not approved for booking`,
+        CONST.BAD_REQUEST
+      )
+    );
+  }
+
+  const propertyId = bookingRequest.property;
   const property = await Property.findById(propertyId);
   if (!property || !property.isActive) {
     return next(
@@ -44,11 +64,12 @@ exports.checkPropertyExistsAndValid = catchAsync(async (req, res, next) => {
 
   req.owner = propertyOwner;
   req.property = property;
+  req.bookingRequestId = bookingRequestId;
   next();
 });
 
 exports.cratePropertyBookingCheckout = catchAsync(async (req, res, next) => {
-  const { property, owner } = req;
+  const { property, owner, bookingRequestId } = req;
 
   let successUrl = `${process.env.FRONTEND_URL}?sessionId={CHECKOUT_SESSION_ID}`;
   if (process.env.NODE_ENV === CONST.PROD) {
@@ -69,6 +90,7 @@ exports.cratePropertyBookingCheckout = catchAsync(async (req, res, next) => {
             metadata: {
               propertyId: property.id,
               ownerId: owner.id,
+              tenantId: req.user.id,
             },
           },
           unit_amount: property.details.price * 100,
@@ -79,7 +101,7 @@ exports.cratePropertyBookingCheckout = catchAsync(async (req, res, next) => {
     mode: 'payment',
     success_url: successUrl,
     cancel_url: process.env.FRONTEND_URL,
-    client_reference_id: req.user.id,
+    client_reference_id: bookingRequestId,
     currency: 'usd',
     customer: req.user.stripeCustomerId,
     payment_method_types: ['card'],
@@ -114,13 +136,14 @@ const createPropertyBookingFromWebhook = async (sessionId) => {
   const applicationFee = Math.round((price / 100) * 10);
   const propertyId = propertyItemData?.price?.product?.metadata?.propertyId;
   const hostId = propertyItemData?.price?.product?.metadata?.ownerId;
+  const nurseId = propertyItemData?.price?.product?.metadata?.tenantId;
 
   const bookingData = {
     price,
     applicationFee,
     totalAmount: price + applicationFee,
     payment_id: session?.payment_intent?.id,
-    nurse: session?.client_reference_id,
+    nurse: nurseId,
     property: propertyId,
     host: hostId,
   };
@@ -129,7 +152,56 @@ const createPropertyBookingFromWebhook = async (sessionId) => {
   const property = await Property.findById(propertyId);
   property.isAvailable = false;
   await property.save({ validateBeforeSave: true });
+  await BookingRequest.findByIdAndDelete(session?.client_reference_id);
 };
+
+exports.createPropertyBookingTest = catchAsync(async (req, res, next) => {
+  const { sessionId } = req.params;
+
+  const session = await stripe.checkout.sessions.retrieve(sessionId, {
+    expand: ['payment_intent', 'customer'],
+  });
+  const lineItems = await stripe.checkout.sessions.listLineItems(sessionId, {
+    limit: 1,
+    expand: ['data.price', 'data.price.product'],
+  });
+
+  const propertyItemData = lineItems?.data[0];
+  const price = Number(propertyItemData?.amount_total) / 100;
+  const applicationFee = Math.round((price / 100) * 10);
+  const propertyId = propertyItemData?.price?.product?.metadata?.propertyId;
+  const hostId = propertyItemData?.price?.product?.metadata?.ownerId;
+  const nurseId = propertyItemData?.price?.product?.metadata?.tenantId;
+
+  const bookingData = {
+    price,
+    applicationFee,
+    totalAmount: price + applicationFee,
+    payment_id: session?.payment_intent?.id,
+    nurse: nurseId,
+    property: propertyId,
+    host: hostId,
+  };
+
+  const booking = await Booking.create(bookingData);
+  const property = await Property.findById(propertyId);
+  property.isAvailable = false;
+  await property.save({ validateBeforeSave: true });
+  const bookingRequest = await BookingRequest.findById(
+    session?.client_reference_id
+  );
+  bookingRequest.isArchived = true;
+  await bookingRequest.save({ validateBeforeSave: true });
+
+  res.status(CONST.OK).json({
+    status: CONST.SUCCESS,
+    data: {
+      session,
+      lineItems,
+      booking,
+    },
+  });
+});
 
 exports.listenTopropertyBookingWebhook = catchAsync(async (req, res, next) => {
   const sig = req.headers['stripe-signature'];
@@ -175,6 +247,15 @@ exports.checkIn = catchAsync(async (req, res, next) => {
     );
   }
 
+  if (booking.host.toString() !== req.user._id.toString()) {
+    return next(
+      new AppError(
+        `You are not allowed to do check-in on this booking`,
+        CONST.FORBIDDEN
+      )
+    );
+  }
+
   const property = await Property.findById(booking.property);
 
   const currentDate = moment(Date.now());
@@ -191,8 +272,7 @@ exports.checkIn = catchAsync(async (req, res, next) => {
   const data = {
     checkInDate: moment(Date.now()).format(),
     checkOutDate: moment(futureMonth).format(),
-    status: 'paid',
-    isActive: true,
+    status: 'Checked-In',
   };
 
   const updatedBooking = await Booking.findByIdAndUpdate(bookingId, data, {
@@ -224,12 +304,21 @@ exports.checkOut = catchAsync(async (req, res, next) => {
     );
   }
 
+  if (booking.host.toString() !== req.user._id.toString()) {
+    return next(
+      new AppError(
+        `You are not allowed to do check-out on this booking`,
+        CONST.FORBIDDEN
+      )
+    );
+  }
+
   const property = await Property.findById(booking.property);
 
   const updatedBooking = await Booking.findByIdAndUpdate(
     bookingId,
     {
-      isActive: false,
+      status: 'Checked-In',
     },
     {
       new: true,
@@ -249,13 +338,90 @@ exports.checkOut = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getAll = handlerFactory.getAll(Booking, {
-  select: ['-payment_id'],
+exports.archiveRestoreBookingNurse = catchAsync(async (req, res, next) => {
+  const { bookingId } = req.params;
+  const { archive } = req.query;
+
+  let archiveQuery = true;
+  if (archive) archiveQuery = archive;
+
+  const booking = await Booking.findById(bookingId);
+  if (!booking) {
+    return next(
+      new AppError(
+        `No booking exists with the Id ${bookingId}`,
+        CONST.BAD_REQUEST
+      )
+    );
+  }
+
+  if (booking.nurse.toString() !== req.user._id.toString()) {
+    return next(
+      new AppError(
+        `You are not allowed to archive this booking`,
+        CONST.FORBIDDEN
+      )
+    );
+  }
+  booking.isArchivedForNurse = archiveQuery;
+
+  await booking.save({ validateBeforeSave: false });
+
+  res.status(CONST.OK).json({
+    status: CONST.SUCCESS,
+    message: 'Operation was made succesfuly',
+  });
 });
-exports.getOne = handlerFactory.getOne(Booking, {
-  populate: ['property'],
-  select: ['-payment_id'],
+
+exports.archiveRestoreBookingHost = catchAsync(async (req, res, next) => {
+  const { bookingId } = req.params;
+  const { archive } = req.query;
+
+  let archiveQuery = true;
+  if (archive) archiveQuery = archive;
+
+  const booking = await Booking.findById(bookingId);
+  if (!booking) {
+    return next(
+      new AppError(
+        `No booking exists with the Id ${bookingId}`,
+        CONST.BAD_REQUEST
+      )
+    );
+  }
+
+  if (booking.host.toString() !== req.user._id.toString()) {
+    return next(
+      new AppError(
+        `You are not allowed to archive this booking`,
+        CONST.FORBIDDEN
+      )
+    );
+  }
+  booking.isArchivedForHost = archiveQuery;
+
+  await booking.save({ validateBeforeSave: false });
+
+  res.status(CONST.OK).json({
+    status: CONST.SUCCESS,
+    message: 'Operation was made succesfuly',
+  });
 });
-exports.filter = handlerFactory.filter(Booking, {
+
+const options = {
   select: ['-payment_id'],
-});
+  populate: [
+    'property',
+    {
+      path: 'host',
+      select: ['firstName', 'lastName', 'email', 'phone'],
+    },
+    {
+      path: 'nurse',
+      select: ['displayName', 'email'],
+    },
+  ],
+};
+exports.getAll = handlerFactory.getAll(Booking, options);
+exports.getOne = handlerFactory.getOne(Booking, options);
+exports.filter = handlerFactory.filter(Booking, options);

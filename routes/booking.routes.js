@@ -9,8 +9,8 @@ const CONST = require('../common/constants');
 
 const router = Router();
 
-router.get(
-  `${CONST.CREATE_BOOKING_CHECKOUT_SESSION}/:propertyId`,
+router.post(
+  `${CONST.CREATE_BOOKING_CHECKOUT_SESSION}/:bookingRequestId`,
   checkLoginType,
   conditional(
     function (req, res, next) {
@@ -22,6 +22,19 @@ router.get(
   restrictTo(CONST.NURSE_ROLE),
   bookingController.checkPropertyExistsAndValid,
   bookingController.cratePropertyBookingCheckout
+);
+router.post(
+  `/create-booking-test/:sessionId`,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.NURSE_ROLE),
+  bookingController.createPropertyBookingTest
 );
 router.patch(
   `${CONST.CREATE_BOOKING}${CONST.CHECK_IN}/:bookingId`,
@@ -48,6 +61,32 @@ router.patch(
   ),
   restrictTo(CONST.HOST_ROLE),
   bookingController.checkOut
+);
+router.post(
+  `${CONST.ARCHIVE}/${CONST.NURSE_ROLE}/:bookingId`,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.NURSE_ROLE),
+  bookingController.archiveRestoreBookingNurse
+);
+router.post(
+  `${CONST.ARCHIVE}/${CONST.HOST_ROLE}/:bookingId`,
+  checkLoginType,
+  conditional(
+    function (req, res, next) {
+      return req.role === CONST.NURSE_ROLE;
+    },
+    nurseAuth.protect,
+    hostAuth.protect
+  ),
+  restrictTo(CONST.HOST_ROLE),
+  bookingController.archiveRestoreBookingHost
 );
 
 router.post(CONST.FILTER, bookingController.filter);
