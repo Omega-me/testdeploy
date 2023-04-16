@@ -122,11 +122,11 @@ exports.createSubCheckoutSession = catchAsync(async (req, res, next) => {
 
 const createSubscriptionBooking = async (sessionId) => {
   try {
-    const session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ['payment_intent', 'customer'],
-    });
+    // const session = await stripe.checkout.sessions.retrieve(sessionId, {
+    //   expand: ['payment_intent', 'customer'],
+    // });
 
-    const nurse = await Nurse.findById(session.client_reference_id);
+    // const nurse = await Nurse.findById(session.client_reference_id);
 
     // const subscriptionPricing = await SubscriptionPricing.find({
     //   userRole: 'Nurse',
@@ -197,7 +197,7 @@ const createSubscriptionBooking = async (sessionId) => {
     // nurse.isSubscriber = true;
     // nurse.subscription = subscriptionBooking._id;
     // await nurse.save({ validateBeforeSave: false });
-    console.log(nurse);
+    console.log('THIS IS A TEST');
   } catch (error) {
     console.log('Stripe Error', error);
   }
