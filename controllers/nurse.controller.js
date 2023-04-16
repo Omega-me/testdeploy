@@ -191,6 +191,8 @@ const createSubscriptionBooking = async (sessionId) => {
   nurse.isSubscriber = true;
   nurse.subscription = subscriptionBooking._id;
   await nurse.save({ validateBeforeSave: false });
+
+  return subscriptionBooking;
 };
 
 exports.createSubscriptionBookingTestSolution = catchAsync(
@@ -293,7 +295,9 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
   }
 
   if (event.type === 'checkout.session.completed') {
-    createSubscriptionBooking(event.data.object.id);
+    console.log(event.data.object.id);
+    const subscription = await createSubscriptionBooking(event.data.object.id);
+    console.log(subscription);
   }
 
   res.status(CONST.OK).json({

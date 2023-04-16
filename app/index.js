@@ -43,9 +43,7 @@ const app = express();
 app.enable('trust proxy');
 
 // middlewares
-app.use(
-  cors({ origin: true, credentials: true, exposedHeaders: ['set-cookie'] })
-);
+app.use(cors({ origin: true, credentials: true }));
 app.options('*', cors());
 process.env.NODE_ENV === 'development' && app.use(logger('dev'));
 app.set('view engine', 'ejs');

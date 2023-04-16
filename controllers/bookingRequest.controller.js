@@ -4,7 +4,6 @@ const catchAsync = require('../common/utils/catchAsync');
 const AppError = require('../common/utils/AppError');
 const CONST = require('../common/constants');
 const Property = require('../models/property.model');
-const { filterBodyObject } = require('../common/utils');
 
 exports.checkIsSubscriber = catchAsync(async (req, res, next) => {
   if (!req.user.isSubscriber && !req.user.subscribtion) {
@@ -66,19 +65,6 @@ exports.checkRequestBelongsToNurse = catchAsync(async (req, res, next) => {
       )
     );
   }
-  next();
-});
-
-exports.controllUpdateData = catchAsync(async (req, res, next) => {
-  const filteredBody = filterBodyObject(
-    req.body,
-    'travelingFrom',
-    'travelingTo',
-    'message'
-  );
-  filteredBody.status = 'Pending';
-  filteredBody.submitted = Date.now();
-  req.body = filteredBody;
   next();
 });
 
