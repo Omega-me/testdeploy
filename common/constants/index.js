@@ -84,3 +84,6 @@ exports.PETS_WELCOME = 'Pets welcome';
 
 exports.HOST_ROLE = 'host';
 exports.NURSE_ROLE = 'nurse';
+
+exports.ARCHIVE_PARAM = 'archive';
+exports.RESTORE_PARAM = 'restore';

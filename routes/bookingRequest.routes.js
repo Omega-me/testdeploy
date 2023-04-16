@@ -94,6 +94,21 @@ router
 router
   .route('/:id')
   .get(bookingRequestController.getOne)
+  .patch(
+    checkLoginType,
+    conditional(
+      function (req, res, next) {
+        return req.role === CONST.NURSE_ROLE;
+      },
+      nurseAuth.protect,
+      hostAuth.protect
+    ),
+    restrictTo(CONST.NURSE_ROLE),
+    bookingRequestController.checkIsSubscriber,
+    bookingRequestController.checkRequestBelongsToNurse,
+    bookingRequestController.controllUpdateData,
+    bookingRequestController.updateOne
+  )
   .delete(
     checkLoginType,
     conditional(

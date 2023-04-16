@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 const fs = require('fs');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const multer = require('multer');
@@ -192,8 +191,6 @@ const createSubscriptionBooking = async (sessionId) => {
   nurse.isSubscriber = true;
   nurse.subscription = subscriptionBooking._id;
   await nurse.save({ validateBeforeSave: false });
-
-  return subscriptionBooking;
 };
 
 exports.createSubscriptionBookingTestSolution = catchAsync(
@@ -296,9 +293,7 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
   }
 
   if (event.type === 'checkout.session.completed') {
-    console.log(event.data.object.id);
-    const subscription = await createSubscriptionBooking(event.data.object.id);
-    console.log(subscription);
+    createSubscriptionBooking(event.data.object.id);
   }
 
   res.status(CONST.OK).json({

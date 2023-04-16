@@ -18,16 +18,19 @@ const bookingSchema = new mongoose.Schema(
     checkOutDate: Date,
     status: {
       type: String,
-      enum: ['pending', 'paid'],
-      default: 'pending',
+      enum: ['Pending', 'Checked in', 'Checked out'],
+      default: 'Pending',
     },
-    payment_id: {
+    paymentId: {
       type: String,
       required: true,
     },
-    isActive: {
+    isArchivedForHost: {
       type: Boolean,
-      required: true,
+      default: false,
+    },
+    isArchivedForNurse: {
+      type: Boolean,
       default: false,
     },
 
