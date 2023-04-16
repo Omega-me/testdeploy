@@ -132,10 +132,10 @@ const createSubscriptionBooking = async (sessionId) => {
     //   userRole: 'Nurse',
     // });
 
-    const charges = await stripe.charges.list({
-      customer: nurse?.stripeCustomerId,
-      limit: 1,
-    });
+    // const charges = await stripe.charges.list({
+    //   customer: nurse?.stripeCustomerId,
+    //   limit: 1,
+    // });
 
     // let charge;
     // if (charges?.data[0]) {
@@ -197,7 +197,7 @@ const createSubscriptionBooking = async (sessionId) => {
     // nurse.isSubscriber = true;
     // nurse.subscription = subscriptionBooking._id;
     // await nurse.save({ validateBeforeSave: false });
-    console.log(charges);
+    console.log(nurse);
   } catch (error) {
     console.log('Stripe Error', error);
   }
