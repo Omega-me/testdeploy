@@ -127,29 +127,33 @@ const createSubscriptionBooking = async (sessionId) => {
   }
 
   const subscriptionBookingData = {
-    subscriptionId: subscription.id,
-    subscriptionPlanId: subscription.plan.id,
-    subscriptionStatus: subscription.status,
-    priceAmount: subscription.plan.amount / 100,
-    currency: subscription.plan.currency,
-    productId: subscription.plan.product,
-    customerId: subscription.customer,
-    userId: host._id,
-    customerRole: host.role,
-    latestInvoiceId: subscription.latest_invoice,
-    email: defaultPayment.billing_details.email,
-    name: defaultPayment.billing_details.name,
-    brand: defaultPayment.card.brand,
-    country: defaultPayment.card.country,
-    expMonth: defaultPayment.card.exp_month,
-    expYear: defaultPayment.card.exp_year,
-    funding: defaultPayment.card.funding,
-    last4: defaultPayment.card.last4,
-    created: new Date(defaultPayment.created * 1000),
-    type: defaultPayment.type,
+    subscriptionId: subscription?.id,
+    subscriptionPlanId: subscription?.plan?.id,
+    subscriptionStatus: subscription?.status,
+    priceAmount: subscription?.plan?.amount && subscription.plan.amount / 100,
+    currency: subscription?.plan?.currency,
+    productId: subscription?.plan?.product,
+    customerId: subscription?.customer,
+    userId: host?._id,
+    customerRole: host?.role,
+    latestInvoiceId: subscription?.latest_invoice,
+    email: defaultPayment?.billing_details?.email,
+    name: defaultPayment?.billing_details?.name,
+    brand: defaultPayment?.card?.brand,
+    country: defaultPayment?.card?.country,
+    expMonth: defaultPayment?.card?.exp_month,
+    expYear: defaultPayment?.card?.exp_year,
+    funding: defaultPayment?.card?.funding,
+    last4: defaultPayment?.card?.last4,
+    created: defaultPayment?.created && new Date(defaultPayment.created * 1000),
+    type: defaultPayment?.type,
     oneTimeSubscription: false,
-    startedAt: new Date(subscription.current_period_start * 1000),
-    endsAt: new Date(subscription.current_period_end * 1000),
+    startedAt:
+      subscription?.current_period_start &&
+      new Date(subscription.current_period_start * 1000),
+    endsAt:
+      subscription?.current_period_end &&
+      new Date(subscription.current_period_end * 1000),
   };
 
   // Create a subscription booking
