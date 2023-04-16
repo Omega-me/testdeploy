@@ -75,7 +75,7 @@ exports.createSubscriptionPlan = catchAsync(async (req, res, next) => {
 
     // Update the pricing id on database
     await SubscriptionPricing.findByIdAndUpdate(
-      subscriptionPricing[0]._id,
+      subscriptionPricing[0]?._id,
       {
         stripePlanId: nursePlan.id,
         stripeProductId: nursePlan.product,
@@ -307,7 +307,7 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
 });
 
 exports.getMe = (req, res, next) => {
-  req.params.id = req.user._id;
+  req.params.id = req?.user?._id;
   req.query.populate = [
     'reviews',
     {
@@ -347,7 +347,7 @@ exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
     });
   }
 
-  req.file.filename = `user-${req.user._id}-${Date.now()}.jpeg`;
+  req.file.filename = `user-${req?.user?._id}-${Date.now()}.jpeg`;
   await sharp(req.file.buffer)
     .resize(500, 500)
     .toFormat('jpeg')
@@ -408,7 +408,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     delete data.favouriteProperties;
   }
 
-  const updatedUser = await Nurse.findByIdAndUpdate(req.user._id, data, {
+  const updatedUser = await Nurse.findByIdAndUpdate(req?.user?._id, data, {
     new: true,
     runValidators: true,
   });
@@ -422,7 +422,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteMe = catchAsync(async (req, res, next) => {
-  await Nurse.findByIdAndUpdate(req.user._id, { isActive: false });
+  await Nurse.findByIdAndUpdate(req?.user?._id, { isActive: false });
 
   res.status(CONST.NO_CONTENT).json({
     status: CONST.SUCCESS,

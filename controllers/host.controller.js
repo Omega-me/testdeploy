@@ -134,7 +134,7 @@ const createSubscriptionBooking = async (sessionId) => {
     currency: subscription?.plan?.currency,
     productId: subscription?.plan?.product,
     customerId: subscription?.customer,
-    userId: host?.id,
+    userId: host?._id,
     customerRole: host?.role,
     latestInvoiceId: subscription?.latest_invoice,
     email: defaultPayment?.billing_details?.email,
@@ -158,11 +158,11 @@ const createSubscriptionBooking = async (sessionId) => {
 
   // Create a subscription booking
   const foundedSubsciptionBooking = await Subscription.find({
-    userId: host.id,
+    userId: host?._id,
   });
 
   if (foundedSubsciptionBooking.length > 0) {
-    await Subscription.findByIdAndDelete(foundedSubsciptionBooking[0].id);
+    await Subscription.findByIdAndDelete(foundedSubsciptionBooking[0]?._id);
   }
 
   const subscriptionBooking = await Subscription.create(
@@ -171,7 +171,7 @@ const createSubscriptionBooking = async (sessionId) => {
 
   // update host
   host.isSubscriber = true;
-  host.subscription = subscriptionBooking.id;
+  host.subscription = subscriptionBooking?._id;
   await host.save({ validateBeforeSave: false });
 };
 
@@ -327,7 +327,7 @@ exports.cancelSubscription = catchAsync(async (req, res, next) => {
 });
 
 exports.getMe = (req, res, next) => {
-  req.params.id = req.user._id;
+  req.params.id = req?.user?._id;
   req.query.populate = 'properties';
   next();
 };
@@ -391,10 +391,14 @@ exports.updateMe = catchAsync(async (req, res, next) => {
   );
   if (req.file) filteredBody.profilePicture = req.file.filename;
 
-  const updatedUser = await Host.findByIdAndUpdate(req.user._id, filteredBody, {
-    new: true,
-    runValidators: true,
-  });
+  const updatedUser = await Host.findByIdAndUpdate(
+    req?.user?._id,
+    filteredBody,
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
 
   res.status(CONST.OK).json({
     status: CONST.SUCCESS,
@@ -405,10 +409,12 @@ exports.updateMe = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteMe = catchAsync(async (req, res, next) => {
-  const host = await Host.findByIdAndUpdate(req.user._id, { isActive: false });
+  const host = await Host.findByIdAndUpdate(req?.user?._id, {
+    isActive: false,
+  });
 
   // deactivate all properties TODO: set it to false in the end
-  await Property.updateMany({ host: host._id }, { isActive: true });
+  await Property.updateMany({ host: host?._id }, { isActive: true });
 
   res.status(CONST.NO_CONTENT).json({
     status: CONST.SUCCESS,
