@@ -297,6 +297,7 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
   }
 
   if (event.type === 'checkout.session.completed') {
+    console.log('session completed');
     createSubscriptionBooking(event.data.object.id);
   }
 
