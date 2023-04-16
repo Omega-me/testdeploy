@@ -134,7 +134,7 @@ const createSubscriptionBooking = async (sessionId) => {
     currency: subscription?.plan?.currency,
     productId: subscription?.plan?.product,
     customerId: subscription?.customer,
-    userId: host?._id,
+    userId: host?.id,
     customerRole: host?.role,
     latestInvoiceId: subscription?.latest_invoice,
     email: defaultPayment?.billing_details?.email,
@@ -158,11 +158,11 @@ const createSubscriptionBooking = async (sessionId) => {
 
   // Create a subscription booking
   const foundedSubsciptionBooking = await Subscription.find({
-    userId: host._id,
+    userId: host.id,
   });
 
   if (foundedSubsciptionBooking.length > 0) {
-    await Subscription.findByIdAndDelete(foundedSubsciptionBooking[0]._id);
+    await Subscription.findByIdAndDelete(foundedSubsciptionBooking[0].id);
   }
 
   const subscriptionBooking = await Subscription.create(
@@ -171,7 +171,7 @@ const createSubscriptionBooking = async (sessionId) => {
 
   // update host
   host.isSubscriber = true;
-  host.subscription = subscriptionBooking._id;
+  host.subscription = subscriptionBooking.id;
   await host.save({ validateBeforeSave: false });
 };
 
