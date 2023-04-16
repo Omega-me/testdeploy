@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const fs = require('fs');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const multer = require('multer');
