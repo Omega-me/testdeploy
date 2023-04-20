@@ -203,12 +203,6 @@ const createSaveMetadata = async (session) => {
   const nurse = await Nurse.findById(session.client_reference_id);
 
   console.log(nurse);
-
-  // if (!nurse.paymentMetadata.toString()) {
-  //   console.log('no payment');
-  // } else {
-  //   console.log('2', nurse.paymentMetadata);
-  // }
 };
 
 exports.createSubscriptionBookingTestSolution = catchAsync(
