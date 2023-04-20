@@ -195,10 +195,12 @@ const createSaveMetadata = async (session) => {
 
     if (nurse !== null && nurse !== undefined) {
       if (!nurse.paymentMetadata) {
-        await PaymentMetadata.create({
+        const metadata = await PaymentMetadata.create({
           nurse: nurse._id,
           sessionId: session.id,
         });
+        nurse.paymentMetadata = metadata._id;
+        await nurse.save({ validateBeforeSave: false });
       } else {
         await PaymentMetadata.findByIdAndUpdate(
           nurse.paymentMetadata,

@@ -177,10 +177,12 @@ const createSaveMetadata = async (session) => {
 
     if (host !== null && host !== undefined) {
       if (!host.paymentMetadata) {
-        await PaymentMetadata.create({
+        const metadata = await PaymentMetadata.create({
           host: host._id,
           sessionId: session.id,
         });
+        host.paymentMetadata = metadata._id;
+        await host.save({ validateBeforeSave: false });
       } else {
         await PaymentMetadata.findByIdAndUpdate(
           host.paymentMetadata,
