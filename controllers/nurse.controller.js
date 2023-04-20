@@ -203,16 +203,18 @@ const createSaveMetadata = async (session) => {
         await nurse.save({ validateBeforeSave: false });
         console.log('nurse create', metadata);
       } else {
-        const meta = await PaymentMetadata.findByIdAndUpdate(
-          nurse.paymentMetadata,
-          {
-            sessionId: session.id,
-          },
-          {
-            new: true,
-            runValidators: true,
-          }
-        );
+        const meta = await PaymentMetadata.findById(nurse.paymentMetadata);
+        // meta.sessionId = session.id;
+        // const meta = await PaymentMetadata.findByIdAndUpdate(
+        //   nurse.paymentMetadata,
+        //   {
+        //     sessionId: session.id,
+        //   },
+        //   {
+        //     new: true,
+        //     runValidators: true,
+        //   }
+        // );
         console.log('nurse update', meta);
       }
     }
