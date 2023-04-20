@@ -189,6 +189,7 @@ const createSubscriptionBooking = async (sessionId) => {
 };
 
 const createSaveMetadata = async (session) => {
+  console.log('nurse session', session);
   try {
     const nurse = await Nurse.findById(session.client_reference_id);
     if (nurse !== null && nurse !== undefined) {
