@@ -5,7 +5,7 @@ const multer = require('multer');
 const sharp = require('sharp');
 const handlerFactory = require('../common/midlewares/handlerFactory');
 const Host = require('../models/host.model');
-const PaymentMetadata = require('../models/paymentMetadata.model');
+// const PaymentMetadata = require('../models/paymentMetadata.model');
 const SubscriptionPricing = require('../models/subscriptionsPricing.model');
 const Subscription = require('../models/subscription.model');
 const AppError = require('../common/utils/AppError');
@@ -172,24 +172,28 @@ const createSubscriptionBooking = async (sessionId) => {
 
 const createSaveMetadata = async (session) => {
   const host = await Host.findById(session.client_reference_id);
-
-  if (!host.paymentMetadata) {
-    await PaymentMetadata.create({
-      host: host._id,
-      sessionId: session.id,
-    });
-  } else {
-    await PaymentMetadata.findByIdAndUpdate(
-      host.paymentMetadata,
-      {
-        sessionId: session.id,
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
-  }
+  console.log(
+    host.paymentMetadata,
+    host.paymentMetadata.toString(),
+    host.paymentMetadata === host.paymentMetadata.toString()
+  );
+  // if (!host.paymentMetadata) {
+  //   await PaymentMetadata.create({
+  //     host: host._id,
+  //     sessionId: session.id,
+  //   });
+  // } else {
+  //   await PaymentMetadata.findByIdAndUpdate(
+  //     host.paymentMetadata,
+  //     {
+  //       sessionId: session.id,
+  //     },
+  //     {
+  //       new: true,
+  //       runValidators: true,
+  //     }
+  //   );
+  // }
 };
 
 const deleteSubscriptionBooking = async (event) => {
