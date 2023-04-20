@@ -6,7 +6,7 @@ const sharp = require('sharp');
 const handlerFactory = require('../common/midlewares/handlerFactory');
 const SubscriptionPricing = require('../models/subscriptionsPricing.model');
 const Subscription = require('../models/subscription.model');
-// const PaymentMetadata = require('../models/paymentMetadata.model');
+const PaymentMetadata = require('../models/paymentMetadata.model');
 const catchAsync = require('../common/utils/catchAsync');
 const Nurse = require('../models/nurse.model');
 const AppError = require('../common/utils/AppError');
@@ -196,15 +196,29 @@ const createSubscriptionBooking = async (sessionId) => {
   // nurse.isSubscriber = true;
   // nurse.subscription = subscriptionBooking._id;
   // await nurse.save({ validateBeforeSave: false });
-  console.log(sessionId);
+  console.log('this is session id', sessionId);
 };
 
 const createSaveMetadata = async (session) => {
   const nurse = await Nurse.findById(session.client_reference_id);
-
-  console.log(nurse);
+  if (!nurse.paymentMetadata) {
+    await PaymentMetadata.create({
+      nurse: nurse.id,
+      sessionId: session.id,
+    });
+  } else {
+    const payment = await PaymentMetadata.findByIdAndUpdate(
+      nurse.paymentMetadata,
+      {
+        sessionId: session.id,
+      },
+      {
+        new: true,
+      }
+    );
+    console.log(payment);
+  }
 };
-
 exports.createSubscriptionBookingTestSolution = catchAsync(
   async (req, res, next) => {
     const { sessionId } = req.query;
