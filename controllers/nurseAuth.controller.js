@@ -2,6 +2,7 @@ const { promisify } = require('util');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const jwt = require('jsonwebtoken');
 const Nurse = require('../models/nurse.model');
+const PaymentMetadata = require('../models/paymentMetadata.model');
 const CONST = require('../common/constants');
 const catchAsync = require('../common/utils/catchAsync');
 const {
@@ -117,6 +118,11 @@ exports.verify = catchAsync(async (req, res, next) => {
   });
   nurse.stripeCustomerId = customer.id;
   nurse.isConnected = true;
+
+  const paymentMetadata = await PaymentMetadata.create({
+    nurse: req.user._id.toString(),
+  });
+  nurse.paymentMetadata = paymentMetadata.id;
 
   await nurse.save({ validateBeforeSave: false });
 
