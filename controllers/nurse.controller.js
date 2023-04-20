@@ -191,8 +191,6 @@ const createSubscriptionBooking = async (sessionId) => {
 const createSaveMetadata = async (session) => {
   try {
     const nurse = await Nurse.findById(session.client_reference_id);
-    console.log('nurse', nurse);
-
     if (nurse !== null && nurse !== undefined) {
       if (!nurse.paymentMetadata) {
         const metadata = await PaymentMetadata.create({
@@ -201,13 +199,10 @@ const createSaveMetadata = async (session) => {
         });
         nurse.paymentMetadata = metadata._id;
         await nurse.save({ validateBeforeSave: false });
-        console.log('nurse create', metadata);
       } else {
         const meta = await PaymentMetadata.findById(nurse.paymentMetadata);
         meta.sessionId = session.id;
         await meta.save({ validateBeforeSave: false });
-
-        console.log('nurse update', meta);
       }
     }
   } catch (error) {
