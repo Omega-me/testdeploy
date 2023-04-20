@@ -125,34 +125,27 @@ const createSubscriptionBooking = async (sessionId) => {
   // const session = await stripe.checkout.sessions.retrieve(sessionId, {
   //   expand: ['payment_intent', 'customer'],
   // });
-
   // const nurse = await Nurse.findById(session.client_reference_id);
-
   // const subscriptionPricing = await SubscriptionPricing.find({
   //   userRole: 'Nurse',
   // });
-
   // const charges = await stripe.charges.list({
   //   customer: nurse?.stripeCustomerId,
   //   limit: 1,
   // });
-
   // let charge;
   // if (charges?.data[0]) {
   //   charge = charges?.data[0];
   // }
-
   // let defaultPayment;
   // if (charge) {
   //   defaultPayment = await stripe.paymentMethods.retrieve(
   //     charge?.payment_method
   //   );
   // }
-
   // const plan = await stripe.plans.retrieve(
   //   subscriptionPricing[0]?.stripePlanId
   // );
-
   // const subscriptionBookingData = {
   //   subscriptionId: charge?.id,
   //   subscriptionproductId: plan?.id,
@@ -178,25 +171,21 @@ const createSubscriptionBooking = async (sessionId) => {
   //   startedAt: charge?.created && new Date(charge.created * 1000),
   //   endsAt: new Date('9999-12-31T23:59:59'),
   // };
-
   // // Create a subscription booking
   // const foundedSubsciptionBooking = await Subscription.find({
   //   userId: nurse._id,
   // });
-
   // if (foundedSubsciptionBooking.length > 0) {
   //   await Subscription.findByIdAndDelete(foundedSubsciptionBooking[0]._id);
   // }
-
   // const subscriptionBooking = await Subscription.create(
   //   subscriptionBookingData
   // );
-
   // // update user and make it subscriber
   // nurse.isSubscriber = true;
   // nurse.subscription = subscriptionBooking._id;
   // await nurse.save({ validateBeforeSave: false });
-  console.log(sessionId);
+  console.log('nurse:', sessionId);
 };
 
 const createSaveMetadata = async (session) => {

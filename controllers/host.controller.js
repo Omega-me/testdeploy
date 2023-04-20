@@ -167,7 +167,7 @@ const createSubscriptionBooking = async (sessionId) => {
   // host.isSubscriber = true;
   // host.subscription = subscriptionBooking?._id;
   // await host.save({ validateBeforeSave: false });
-  console.log(sessionId);
+  console.log('host:', sessionId);
 };
 
 const createSaveMetadata = async (session) => {
