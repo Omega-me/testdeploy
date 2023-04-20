@@ -6,7 +6,7 @@ const sharp = require('sharp');
 const handlerFactory = require('../common/midlewares/handlerFactory');
 const SubscriptionPricing = require('../models/subscriptionsPricing.model');
 const Subscription = require('../models/subscription.model');
-const PaymentMetadata = require('../models/paymentMetadata.model');
+// const PaymentMetadata = require('../models/paymentMetadata.model');
 const catchAsync = require('../common/utils/catchAsync');
 const Nurse = require('../models/nurse.model');
 const AppError = require('../common/utils/AppError');
@@ -202,24 +202,10 @@ const createSubscriptionBooking = async (sessionId) => {
 const createSaveMetadata = async (session) => {
   const nurse = await Nurse.findById(session.client_reference_id);
 
-  if (nurse.paymentMetadata !== null || nurse.paymentMetadata !== undefined) {
-    console.log('1', nurse);
-    await PaymentMetadata.create({
-      nurse: nurse._id,
-      sessionId: session.id,
-    });
+  if (!nurse.paymentMetadata.toString()) {
+    console.log('no payment');
   } else {
-    console.log('2', nurse);
-    await PaymentMetadata.findByIdAndUpdate(
-      nurse.paymentMetadata,
-      {
-        sessionId: session.id,
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+    console.log('2', nurse.paymentMetadata);
   }
 };
 
