@@ -64,10 +64,15 @@ app.use(
   hostController.listendToSubscriptionWebhook
 );
 app.use(
-  '/nurse/subscribe-webhook',
+  '/subscribe/nurse',
   express.raw({ type: 'application/json' }),
   nurseController.listendToSubscriptionWebhook
 );
+// app.use(
+//   '/nurse/subscribe-webhook',
+//   express.raw({ type: 'application/json' }),
+//   nurseController.listendToSubscriptionWebhook
+// );
 app.use(express.json());
 app.use(cookieParser());
 app.use(
