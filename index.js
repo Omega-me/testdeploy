@@ -46,16 +46,16 @@ const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}...`);
 });
 
-process.on('unhandledRejection', (err) => {
-  console.log(
-    'Unhandled Rejection! >>>>> Shooting down...',
-    '\n',
-    err.name,
-    '-',
-    err.message
-  );
-  server.close(() => {
-    // 0 stands for success, 1 stands for unhandled rejection
-    process.exit(1);
-  });
-});
+// process.on('unhandledRejection', (err) => {
+//   console.log(
+//     'Unhandled Rejection! >>>>> Shooting down...',
+//     '\n',
+//     err.name,
+//     '-',
+//     err.message
+//   );
+//   server.close(() => {
+//     // 0 stands for success, 1 stands for unhandled rejection
+//     process.exit(1);
+//   });
+// });
