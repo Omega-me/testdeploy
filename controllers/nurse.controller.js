@@ -51,13 +51,13 @@ exports.createSubscriptionPlan = catchAsync(async (req, res, next) => {
   let nursePlan;
   let price;
   try {
-    // Retrieve the subscription plan from stripe for the host
+    // Retrieve the subscription plan from stripe for the nurse
     nursePlan = await stripe.plans.retrieve(
       subscriptionPricing[0].stripePlanId
     );
     price = await stripe.prices.retrieve(subscriptionPricing[0].stripePriceId);
   } catch (_) {
-    // Create a subscription plan for the host on stripe
+    // Create a subscription plan for the nurse on stripe
     nursePlan = await stripe.plans.create({
       amount: subscriptionPricing[0].amount * 100,
       currency: subscriptionPricing[0].currency,
@@ -202,19 +202,14 @@ const createSubscriptionBooking = async (sessionId) => {
 const createSaveMetadata = async (session) => {
   const nurse = await Nurse.findById(session.client_reference_id);
 
-  console.log(nurse);
-
-  if (!nurse?.paymentMetadata) {
-    console.log('on create');
-
+  if (!nurse.paymentMetadata) {
     await PaymentMetadata.create({
       nurse: nurse._id,
       sessionId: session.id,
     });
   } else {
-    console.log('on update');
     await PaymentMetadata.findByIdAndUpdate(
-      nurse?.paymentMetadata,
+      nurse.paymentMetadata.toString(),
       {
         sessionId: session.id,
       },
