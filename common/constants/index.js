@@ -22,6 +22,7 @@ exports.PRICINGS = 'pricings';
 exports.SUBSCRIBTIONS = 'subscriptions';
 exports.BOOKINGS = 'bookings';
 exports.BOOKING_REQUESTS = 'bookingsRequests';
+exports.PAYMENT_METADATA = 'paymentMetadata';
 exports.CANCEL = 'cancel';
 exports.SUBSCRIBE = '/subscribe';
 exports.FILTER = '/filter';

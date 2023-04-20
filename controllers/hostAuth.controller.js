@@ -2,6 +2,7 @@ const { promisify } = require('util');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const jwt = require('jsonwebtoken');
 const Host = require('../models/host.model');
+const PaymentMetadata = require('../models/paymentMetadata.model');
 const CONST = require('../common/constants');
 const catchAsync = require('../common/utils/catchAsync');
 const {
@@ -107,6 +108,11 @@ exports.verify = catchAsync(async (req, res, next) => {
     name: `${host.firstName} ${host.lastName}`,
   });
   host.stripeCustomerId = customer.id;
+
+  const paymentMetadata = await PaymentMetadata.create({
+    host: req.user._id.toString(),
+  });
+  host.paymentMetadata = paymentMetadata.id;
 
   await host.save({ validateBeforeSave: false });
 

@@ -100,6 +100,10 @@ const hostSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'Subscription',
     },
+    paymentMetadata: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'PaymentMetadata',
+    },
   },
   {
     toJSON: { virtuals: true },
