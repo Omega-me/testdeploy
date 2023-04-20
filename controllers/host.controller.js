@@ -173,22 +173,24 @@ const createSubscriptionBooking = async (sessionId) => {
 const createSaveMetadata = async (session) => {
   try {
     const host = await Host.findById(session.client_reference_id);
-    if (!host.paymentMetadata) {
-      await PaymentMetadata.create({
-        host: host._id,
-        sessionId: session.id,
-      });
-    } else {
-      await PaymentMetadata.findByIdAndUpdate(
-        host.paymentMetadata,
-        {
+    if (host) {
+      if (!host.paymentMetadata) {
+        await PaymentMetadata.create({
+          host: host._id,
           sessionId: session.id,
-        },
-        {
-          new: true,
-          runValidators: true,
-        }
-      );
+        });
+      } else {
+        await PaymentMetadata.findByIdAndUpdate(
+          host.paymentMetadata,
+          {
+            sessionId: session.id,
+          },
+          {
+            new: true,
+            runValidators: true,
+          }
+        );
+      }
     }
   } catch (error) {
     console.log(error);
