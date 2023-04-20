@@ -202,14 +202,16 @@ const createSubscriptionBooking = async (sessionId) => {
 const createSaveMetadata = async (session) => {
   const nurse = await Nurse.findById(session.client_reference_id);
 
-  if (!nurse.paymentMetadata) {
+  if (nurse.paymentMetadata !== null || nurse.paymentMetadata !== undefined) {
+    console.log('1', nurse);
     await PaymentMetadata.create({
       nurse: nurse._id,
       sessionId: session.id,
     });
   } else {
+    console.log('2', nurse);
     await PaymentMetadata.findByIdAndUpdate(
-      nurse.paymentMetadata.toString(),
+      nurse.paymentMetadata,
       {
         sessionId: session.id,
       },
