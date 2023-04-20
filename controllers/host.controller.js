@@ -183,18 +183,13 @@ const createSaveMetadata = async (session) => {
         });
         host.paymentMetadata = metadata._id;
         await host.save({ validateBeforeSave: false });
+
         console.log('host create', metadata);
       } else {
-        const meta = await PaymentMetadata.findByIdAndUpdate(
-          host.paymentMetadata,
-          {
-            sessionId: session.id,
-          },
-          {
-            new: true,
-            runValidators: true,
-          }
-        );
+        const meta = await PaymentMetadata.findById(host.paymentMetadata);
+        meta.sessionId = session.id;
+        await meta.save({ validateBeforeSave: false });
+
         console.log('host update', meta);
       }
     }
