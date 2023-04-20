@@ -171,10 +171,10 @@ const createSubscriptionBooking = async (sessionId) => {
 };
 
 const createSaveMetadata = async (session) => {
-  console.log('host session', session);
-
   try {
     const host = await Host.findById(session.client_reference_id);
+    console.log('host', host);
+
     if (host !== null && host !== undefined) {
       if (!host.paymentMetadata) {
         await PaymentMetadata.create({
