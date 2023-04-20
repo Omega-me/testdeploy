@@ -65,7 +65,7 @@ app.use(
 );
 app.use(
   '/nurse/subscribe-webhook',
-  express.raw({ type: 'application/json' }),
+  express.raw({ type: '*/*' }),
   nurseController.listendToSubscriptionWebhook
 );
 app.use(express.json());
