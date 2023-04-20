@@ -55,12 +55,12 @@ app.use('/public', express.static(path.join(__dirname, '../public')));
 app.use(helmet());
 app.use(
   '/property-boooking-webhook',
-  express.raw({ type: 'application/json' }),
+  express.raw({ type: '*/*' }),
   bookingController.listenTopropertyBookingWebhook
 );
 app.use(
   '/host/subscribe-webhook',
-  express.raw({ type: 'application/json' }),
+  express.raw({ type: '*/*' }),
   hostController.listendToSubscriptionWebhook
 );
 app.use(
