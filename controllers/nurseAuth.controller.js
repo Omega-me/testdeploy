@@ -122,7 +122,7 @@ exports.verify = catchAsync(async (req, res, next) => {
   const paymentMetadata = await PaymentMetadata.create({
     nurse: req.user._id.toString(),
   });
-  nurse.paymentMetadata = paymentMetadata.id;
+  nurse.paymentMetadata = paymentMetadata._id.toString();
 
   await nurse.save({ validateBeforeSave: false });
 

@@ -283,6 +283,11 @@ exports.createSubscriptionBookingTestSolution = catchAsync(
   }
 );
 
+const test = async (session) => {
+  const host = await Host.findById(session.client_reference_id);
+  console.log(host);
+};
+
 exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
   const sig = req.headers['stripe-signature'];
 
@@ -301,8 +306,9 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
   switch (event.type) {
     case 'checkout.session.completed':
       console.log('session completed');
-      createSubscriptionBooking(event.data.object.id);
-      createSaveMetadata(event.data.object);
+      // createSubscriptionBooking(event.data.object.id);
+      // createSaveMetadata(event.data.object);
+      test(event.data.object);
       break;
     case 'checkout.session.expired':
       console.log('session expired');
