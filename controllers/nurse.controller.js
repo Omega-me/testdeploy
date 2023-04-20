@@ -304,8 +304,7 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
     event = stripe.webhooks.constructEvent(
       req.body,
       sig,
-      process.env.STRIPE_NURSE_SUBSCRIPTION_WEBHOOK_SECRET2
-      // process.env.STRIPE_NURSE_SUBSCRIPTION_WEBHOOK_SECRET
+      process.env.STRIPE_NURSE_SUBSCRIPTION_WEBHOOK_SECRET
     );
   } catch (err) {
     return res.status(CONST.BAD_REQUEST).send(`Webhook Error: ${err.message}`);
