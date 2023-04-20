@@ -112,7 +112,7 @@ exports.verify = catchAsync(async (req, res, next) => {
   const paymentMetadata = await PaymentMetadata.create({
     host: req.user._id.toString(),
   });
-  host.paymentMetadata = paymentMetadata.id;
+  host.paymentMetadata = paymentMetadata._id.toString();
 
   await host.save({ validateBeforeSave: false });
 
