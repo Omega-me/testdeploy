@@ -143,7 +143,7 @@ const createPropertyBookingFromWebhook = async (sessionId) => {
       price,
       applicationFee,
       totalAmount: price + applicationFee,
-      payment_id: session?.payment_intent?.id,
+      paymentId: session?.payment_intent?.id,
       nurse: nurseId,
       property: propertyId,
       host: hostId,
