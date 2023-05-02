@@ -35,14 +35,17 @@ exports.signup = catchAsync(async (req, res, next) => {
     expirationDate,
     state,
   };
-  // create the user
   let isSuccess = false;
   const createdUser = new Host(userData);
   if (createdUser) {
     const verificationToken = await createdUser.createverifyToken();
     const user = await createdUser.save();
-    if (user) {
-      // send welcome email
+    const paymentMetadata = await PaymentMetadata.create({
+      host: user._id,
+    });
+    user.paymentMetadata = paymentMetadata._id;
+    const completeUser = await user.save({ validateBeforeSave: false });
+    if (completeUser) {
       isSuccess = await new Email(
         createdUser,
         `${process.env.FRONTEND_URL}/verifyEmail/${verificationToken}`,
@@ -51,6 +54,7 @@ exports.signup = catchAsync(async (req, res, next) => {
       ).sendWelcome();
       if (!isSuccess) {
         await Host.findByIdAndDelete(createdUser.id);
+        await PaymentMetadata.findByIdAndDelete(createdUser.paymentMetadata);
       } else {
         sendUserTokenSuccess(createdUser, req, res, CONST.CREATED);
       }
@@ -109,10 +113,12 @@ exports.verify = catchAsync(async (req, res, next) => {
   });
   host.stripeCustomerId = customer.id;
 
-  const paymentMetadata = await PaymentMetadata.create({
-    host: req.user._id.toString(),
-  });
-  host.paymentMetadata = paymentMetadata._id.toString();
+  if (!host.paymentMetadata) {
+    const paymentMetadata = await PaymentMetadata.create({
+      host: req.user._id.toString(),
+    });
+    host.paymentMetadata = paymentMetadata._id.toString();
+  }
 
   await host.save({ validateBeforeSave: false });
 

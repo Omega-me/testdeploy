@@ -1,18 +1,29 @@
 const { Router } = require('express');
 const conditional = require('express-conditional-middleware');
-const groupRentalController = require('../controllers/groupRental.controller');
-const CONST = require('../common/constants');
-const { restrictTo } = require('../common/midlewares/restrict');
-const hostAuth = require('../controllers/hostAuth.controller');
-const nurseAuth = require('../controllers/nurseAuth.controller');
+const chatController = require('../controllers/chat.controller');
 const { checkLoginType } = require('../common/midlewares/checkLoginType');
+const messageRouter = require('./message.routes');
+const nurseAuth = require('../controllers/nurseAuth.controller');
+const hostAuth = require('../controllers/hostAuth.controller');
+const CONST = require('../common/constants');
 
 const router = Router();
 
-router.post(CONST.FILTER, groupRentalController.filter);
+router.use('/:chatId/messages', messageRouter);
+
 router
   .route('/')
-  .get(groupRentalController.getAll)
+  .get(
+    checkLoginType,
+    conditional(
+      function (req, res, next) {
+        return req.role === CONST.NURSE_ROLE;
+      },
+      nurseAuth.protect,
+      hostAuth.protect
+    ),
+    chatController.getMyChats
+  )
   .post(
     checkLoginType,
     conditional(
@@ -22,14 +33,13 @@ router
       nurseAuth.protect,
       hostAuth.protect
     ),
-    restrictTo(CONST.HOST_ROLE),
-    groupRentalController.addHostToGroup,
-    groupRentalController.create
+    chatController.createChat,
+    chatController.create
   );
+
 router
   .route('/:id')
-  .get(groupRentalController.getOne)
-  .patch(
+  .get(
     checkLoginType,
     conditional(
       function (req, res, next) {
@@ -38,9 +48,8 @@ router
       nurseAuth.protect,
       hostAuth.protect
     ),
-    restrictTo(CONST.HOST_ROLE),
-    groupRentalController.checkValidityforDeleteUpdate,
-    groupRentalController.updateOne
+    chatController.checkifChatBelongsToUser,
+    chatController.getOne
   )
   .delete(
     checkLoginType,
@@ -51,9 +60,8 @@ router
       nurseAuth.protect,
       hostAuth.protect
     ),
-    restrictTo(CONST.HOST_ROLE),
-    groupRentalController.checkValidityforDeleteUpdate,
-    groupRentalController.deleteOne
+    chatController.checkifChatBelongsToUser,
+    chatController.deleteOne
   );
 
 module.exports = router;

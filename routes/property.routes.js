@@ -34,7 +34,8 @@ router.get(
   propertyController.filter
 );
 // /property-within?distance=233&center=-40,45&unit=mi
-router.get('/locations', propertyController.searchForLocations);
+
+router.get('/get-state-city', propertyController.getCountryAndCities);
 
 router.use('/:propertyId/reviews', reviewRouter);
 

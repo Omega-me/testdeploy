@@ -5,6 +5,7 @@
 
 require('dotenv').config();
 const mongoose = require('mongoose');
+const server = require('./server');
 
 process.on('uncaughtException', (err) => {
   console.log(
@@ -17,7 +18,7 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
-const app = require('./app');
+// const app = require('./app');
 
 // connect to dhe mongodb db
 const DB = process.env.MONGO_CONECTION_STRING.replace(
@@ -42,7 +43,7 @@ mongoose
   .catch((err) => console.error(err.name, '-', err.message, '\n', err));
 
 const PORT = process.env.PORT || 3333;
-const server = app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}...`);
 });
 

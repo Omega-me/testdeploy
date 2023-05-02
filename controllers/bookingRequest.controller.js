@@ -13,6 +13,19 @@ exports.checkIsSubscriber = catchAsync(async (req, res, next) => {
   next();
 });
 
+exports.checkPropertyAvailable = catchAsync(async (req, res, next) => {
+  const property = await Property.findById(req.body.property);
+  if (!property.isAvailable) {
+    return next(
+      new AppError(
+        'This listing is not available for the moment',
+        CONST.FORBIDDEN
+      )
+    );
+  }
+  next();
+});
+
 exports.checkPropertyBelongsToHost = catchAsync(async (req, res, next) => {
   const bookingRequest = await BookingRequest.findById(req.params.id);
   const property = await Property.findById(bookingRequest.property);

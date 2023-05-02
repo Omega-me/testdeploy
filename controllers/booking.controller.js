@@ -123,36 +123,40 @@ exports.cratePropertyBookingCheckout = catchAsync(async (req, res, next) => {
 });
 
 const createPropertyBookingFromWebhook = async (sessionId) => {
-  const session = await stripe.checkout.sessions.retrieve(sessionId, {
-    expand: ['payment_intent', 'customer'],
-  });
-  const lineItems = await stripe.checkout.sessions.listLineItems(sessionId, {
-    limit: 1,
-    expand: ['data.price', 'data.price.product'],
-  });
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ['payment_intent', 'customer'],
+    });
+    const lineItems = await stripe.checkout.sessions.listLineItems(sessionId, {
+      limit: 1,
+      expand: ['data.price', 'data.price.product'],
+    });
 
-  const propertyItemData = lineItems?.data[0];
-  const price = Number(propertyItemData?.amount_total) / 100;
-  const applicationFee = Math.round((price / 100) * 10);
-  const propertyId = propertyItemData?.price?.product?.metadata?.propertyId;
-  const hostId = propertyItemData?.price?.product?.metadata?.ownerId;
-  const nurseId = propertyItemData?.price?.product?.metadata?.tenantId;
+    const propertyItemData = lineItems?.data[0];
+    const price = Number(propertyItemData?.amount_total) / 100;
+    const applicationFee = Math.round((price / 100) * 10);
+    const propertyId = propertyItemData?.price?.product?.metadata?.propertyId;
+    const hostId = propertyItemData?.price?.product?.metadata?.ownerId;
+    const nurseId = propertyItemData?.price?.product?.metadata?.tenantId;
 
-  const bookingData = {
-    price,
-    applicationFee,
-    totalAmount: price + applicationFee,
-    payment_id: session?.payment_intent?.id,
-    nurse: nurseId,
-    property: propertyId,
-    host: hostId,
-  };
+    const bookingData = {
+      price,
+      applicationFee,
+      totalAmount: price + applicationFee,
+      payment_id: session?.payment_intent?.id,
+      nurse: nurseId,
+      property: propertyId,
+      host: hostId,
+    };
 
-  await Booking.create(bookingData);
-  const property = await Property.findById(propertyId);
-  property.isAvailable = false;
-  await property.save({ validateBeforeSave: true });
-  await BookingRequest.findByIdAndDelete(session?.client_reference_id);
+    await Booking.create(bookingData);
+    const property = await Property.findById(propertyId);
+    property.isAvailable = false;
+    await property.save({ validateBeforeSave: false });
+    await BookingRequest.findByIdAndDelete(session?.client_reference_id);
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 exports.createPropertyBookingTest = catchAsync(async (req, res, next) => {
@@ -177,7 +181,7 @@ exports.createPropertyBookingTest = catchAsync(async (req, res, next) => {
     price,
     applicationFee,
     totalAmount: price + applicationFee,
-    payment_id: session?.payment_intent?.id,
+    paymentId: session?.payment_intent?.id,
     nurse: nurseId,
     property: propertyId,
     host: hostId,
@@ -186,12 +190,8 @@ exports.createPropertyBookingTest = catchAsync(async (req, res, next) => {
   const booking = await Booking.create(bookingData);
   const property = await Property.findById(propertyId);
   property.isAvailable = false;
-  await property.save({ validateBeforeSave: true });
-  const bookingRequest = await BookingRequest.findById(
-    session?.client_reference_id
-  );
-  bookingRequest.isArchived = true;
-  await bookingRequest.save({ validateBeforeSave: true });
+  await property.save({ validateBeforeSave: false });
+  await BookingRequest.findByIdAndDelete(session?.client_reference_id);
 
   res.status(CONST.OK).json({
     status: CONST.SUCCESS,
@@ -250,7 +250,7 @@ exports.checkIn = catchAsync(async (req, res, next) => {
   if (booking.host.toString() !== req.user._id.toString()) {
     return next(
       new AppError(
-        `You are not allowed to do check-in on this booking`,
+        `You are not allowed to check-in this tenant`,
         CONST.FORBIDDEN
       )
     );
@@ -272,7 +272,7 @@ exports.checkIn = catchAsync(async (req, res, next) => {
   const data = {
     checkInDate: moment(Date.now()).format(),
     checkOutDate: moment(futureMonth).format(),
-    status: 'Checked-In',
+    status: 'Checked in',
   };
 
   const updatedBooking = await Booking.findByIdAndUpdate(bookingId, data, {
@@ -307,7 +307,7 @@ exports.checkOut = catchAsync(async (req, res, next) => {
   if (booking.host.toString() !== req.user._id.toString()) {
     return next(
       new AppError(
-        `You are not allowed to do check-out on this booking`,
+        `You are not allowed to check-out this tenant`,
         CONST.FORBIDDEN
       )
     );
@@ -318,7 +318,7 @@ exports.checkOut = catchAsync(async (req, res, next) => {
   const updatedBooking = await Booking.findByIdAndUpdate(
     bookingId,
     {
-      status: 'Checked-In',
+      status: 'Checked out',
     },
     {
       new: true,

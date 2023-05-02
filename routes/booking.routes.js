@@ -37,7 +37,7 @@ router.post(
   bookingController.createPropertyBookingTest
 );
 router.patch(
-  `${CONST.CREATE_BOOKING}${CONST.CHECK_IN}/:bookingId`,
+  `/:bookingId${CONST.CHECK_IN}`,
   checkLoginType,
   conditional(
     function (req, res, next) {
@@ -50,7 +50,7 @@ router.patch(
   bookingController.checkIn
 );
 router.patch(
-  `${CONST.CREATE_BOOKING}${CONST.CHECK_OUT}/:bookingId`,
+  `/:bookingId${CONST.CHECK_OUT}`,
   checkLoginType,
   conditional(
     function (req, res, next) {

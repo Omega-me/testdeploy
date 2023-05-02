@@ -184,8 +184,6 @@ const propertySchema = new mongoose.Schema(
     amenities: [String],
     slug: String,
 
-    // payment: {},
-
     // relations
     host: {
       type: mongoose.Schema.ObjectId,

@@ -33,6 +33,7 @@ const subscriptionRouter = require('../routes/subscription.routes');
 const bookingRouter = require('../routes/booking.routes');
 const bookingRequestRouter = require('../routes/bookingRequest.routes');
 const paymentMetadataRouter = require('../routes/paymentMetadata.routes');
+const chatRouter = require('../routes/chat.routes');
 
 // webhooks controllers
 const bookingController = require('../controllers/booking.controller');
@@ -104,6 +105,7 @@ app.use(`${CONST.BASE}/${CONST.SUBSCRIBTIONS}`, subscriptionRouter);
 app.use(`${CONST.BASE}/${CONST.BOOKINGS}`, bookingRouter);
 app.use(`${CONST.BASE}/${CONST.BOOKING_REQUESTS}`, bookingRequestRouter);
 app.use(`${CONST.BASE}/${CONST.PAYMENT_METADATA}`, paymentMetadataRouter);
+app.use(`${CONST.BASE}/${CONST.CHATS}`, chatRouter);
 
 app.all('*', (req, res, next) => {
   next(

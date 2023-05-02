@@ -7,12 +7,10 @@ const nurseAuth = require('../controllers/nurseAuth.controller');
 const { restrictTo } = require('../common/midlewares/restrict');
 const { checkLoginType } = require('../common/midlewares/checkLoginType');
 const propertyRouter = require('./property.routes');
-const groupRouter = require('./groupRental.routes');
 
 const router = Router();
 
 router.use('/:hostId/properties', propertyRouter);
-router.use('/:hostId/groups', groupRouter);
 
 // auth routes
 router.post(CONST.SIGNUP, hostAuth.signup);
@@ -159,7 +157,7 @@ router.post(
   hostController.createSubCheckoutSession
 );
 router.post(
-  '/subscription-booking-test',
+  '/subscription-booking',
   checkLoginType,
   conditional(
     function (req, res, next) {
@@ -169,7 +167,7 @@ router.post(
     hostAuth.protect
   ),
   restrictTo(CONST.HOST_ROLE),
-  hostController.createSubscriptionBookingTestSolution
+  hostController.createSubscriptionBooking
 );
 router.post(
   `${CONST.SUBSCRIBE}/${CONST.CANCEL}`,

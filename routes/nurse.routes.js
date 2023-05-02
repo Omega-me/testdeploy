@@ -109,7 +109,7 @@ router.post(
   nurseController.createSubCheckoutSession
 );
 router.post(
-  '/subscription-booking-test',
+  '/subscription-booking',
   checkLoginType,
   conditional(
     function (req, res, next) {
@@ -119,7 +119,7 @@ router.post(
     hostAuth.protect
   ),
   restrictTo(CONST.NURSE_ROLE),
-  nurseController.createSubscriptionBookingTestSolution
+  nurseController.createSubscriptionBooking
 );
 
 router.get(

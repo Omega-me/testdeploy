@@ -5,6 +5,10 @@ const CONST = require('../common/constants');
 
 const groupRentalSchema = new mongoose.Schema(
   {
+    title: {
+      type: String,
+      required: true,
+    },
     numberOfPersons: {
       type: Number,
       required: [

@@ -89,6 +89,7 @@ router
     ),
     restrictTo(CONST.NURSE_ROLE),
     bookingRequestController.checkIsSubscriber,
+    bookingRequestController.checkPropertyAvailable,
     bookingRequestController.create
   );
 router

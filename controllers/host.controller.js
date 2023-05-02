@@ -81,10 +81,7 @@ exports.createSubscriptionPlan = catchAsync(async (req, res, next) => {
 });
 
 exports.createSubCheckoutSession = catchAsync(async (req, res, next) => {
-  const successUrl = `${process.env.FRONTEND_URL}?sessionId={CHECKOUT_SESSION_ID}`;
-  // if (process.env.NODE_ENV === CONST.PROD) {
-  //   successUrl = process.env.FRONTEND_URL;
-  // }
+  const successUrl = `${process.env.FRONTEND_URL}/dashboard/profile?sessionId={CHECKOUT_SESSION_ID}`;
 
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
@@ -109,66 +106,6 @@ exports.createSubCheckoutSession = catchAsync(async (req, res, next) => {
     },
   });
 });
-
-const createSubscriptionBooking = async (sessionId) => {
-  // const session = await stripe.checkout.sessions.retrieve(sessionId, {
-  //   expand: ['payment_intent', 'customer'],
-  // });
-  // const host = await Host.findById(session.client_reference_id);
-  // const subscription = await stripe.subscriptions.retrieve(
-  //   session.subscription
-  // );
-  // let defaultPayment;
-  // if (subscription) {
-  //   defaultPayment = await stripe.paymentMethods.retrieve(
-  //     subscription.default_payment_method
-  //   );
-  // }
-  // const subscriptionBookingData = {
-  //   subscriptionId: subscription?.id,
-  //   subscriptionPlanId: subscription?.plan?.id,
-  //   subscriptionStatus: subscription?.status,
-  //   priceAmount: subscription?.plan?.amount && subscription.plan.amount / 100,
-  //   currency: subscription?.plan?.currency,
-  //   productId: subscription?.plan?.product,
-  //   customerId: subscription?.customer,
-  //   userId: host?._id,
-  //   customerRole: host?.role,
-  //   latestInvoiceId: subscription?.latest_invoice,
-  //   email: defaultPayment?.billing_details?.email,
-  //   name: defaultPayment?.billing_details?.name,
-  //   brand: defaultPayment?.card?.brand,
-  //   country: defaultPayment?.card?.country,
-  //   expMonth: defaultPayment?.card?.exp_month,
-  //   expYear: defaultPayment?.card?.exp_year,
-  //   funding: defaultPayment?.card?.funding,
-  //   last4: defaultPayment?.card?.last4,
-  //   created: defaultPayment?.created && new Date(defaultPayment.created * 1000),
-  //   type: defaultPayment?.type,
-  //   oneTimeSubscription: false,
-  //   startedAt:
-  //     subscription?.current_period_start &&
-  //     new Date(subscription.current_period_start * 1000),
-  //   endsAt:
-  //     subscription?.current_period_end &&
-  //     new Date(subscription.current_period_end * 1000),
-  // };
-  // // Create a subscription booking
-  // const foundedSubsciptionBooking = await Subscription.find({
-  //   userId: host?._id,
-  // });
-  // if (foundedSubsciptionBooking.length > 0) {
-  //   await Subscription.findByIdAndDelete(foundedSubsciptionBooking[0]?._id);
-  // }
-  // const subscriptionBooking = await Subscription.create(
-  //   subscriptionBookingData
-  // );
-  // // update host
-  // host.isSubscriber = true;
-  // host.subscription = subscriptionBooking?._id;
-  // await host.save({ validateBeforeSave: false });
-  console.log('host:', sessionId);
-};
 
 const createSaveMetadata = async (session) => {
   try {
@@ -208,75 +145,78 @@ const deleteSubscriptionBooking = async (event) => {
   await host.save({ validateBeforeSave: false });
 };
 
-exports.createSubscriptionBookingTestSolution = catchAsync(
-  async (req, res, next) => {
-    const { sessionId } = req.query;
-    const session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ['payment_intent', 'customer'],
-    });
-    const host = await Host.findById(session.client_reference_id);
+exports.createSubscriptionBooking = catchAsync(async (req, res, next) => {
+  const { sessionId } = req.query;
+  const session = await stripe.checkout.sessions.retrieve(sessionId, {
+    expand: ['payment_intent', 'customer'],
+  });
+  const host = await Host.findById(session.client_reference_id);
+  const paymentMetadata = await PaymentMetadata.findById(host.paymentMetadata);
 
-    const subscription = await stripe.subscriptions.retrieve(
-      session.subscription
+  const subscription = await stripe.subscriptions.retrieve(
+    session.subscription
+  );
+
+  let defaultPayment;
+  if (subscription) {
+    defaultPayment = await stripe.paymentMethods.retrieve(
+      subscription.default_payment_method
     );
-
-    let defaultPayment;
-    if (subscription) {
-      defaultPayment = await stripe.paymentMethods.retrieve(
-        subscription.default_payment_method
-      );
-    }
-
-    const subscriptionBookingData = {
-      subscriptionId: subscription.id,
-      subscriptionPlanId: subscription.plan.id,
-      subscriptionStatus: subscription.status,
-      priceAmount: subscription.plan.amount / 100,
-      currency: subscription.plan.currency,
-      productId: subscription.plan.product,
-      customerId: subscription.customer,
-      userId: host._id,
-      customerRole: host.role,
-      latestInvoiceId: subscription.latest_invoice,
-      email: defaultPayment.billing_details.email,
-      name: defaultPayment.billing_details.name,
-      brand: defaultPayment.card.brand,
-      country: defaultPayment.card.country,
-      expMonth: defaultPayment.card.exp_month,
-      expYear: defaultPayment.card.exp_year,
-      funding: defaultPayment.card.funding,
-      last4: defaultPayment.card.last4,
-      created: new Date(defaultPayment.created * 1000),
-      type: defaultPayment.type,
-      oneTimeSubscription: false,
-      startedAt: new Date(subscription.current_period_start * 1000),
-      endsAt: new Date(subscription.current_period_end * 1000),
-    };
-
-    // Create a subscription booking
-    const foundedSubsciptionBooking = await Subscription.find({
-      userId: host._id,
-    });
-
-    if (foundedSubsciptionBooking.length > 0) {
-      await Subscription.findByIdAndDelete(foundedSubsciptionBooking[0]._id);
-    }
-
-    const subscriptionBooking = await Subscription.create(
-      subscriptionBookingData
-    );
-
-    // update host
-    host.isSubscriber = true;
-    host.subscription = subscriptionBooking._id;
-    await host.save({ validateBeforeSave: false });
-
-    res.status(CONST.OK).json({
-      status: CONST.SUCCESS,
-      data: { session, host },
-    });
   }
-);
+
+  const subscriptionBookingData = {
+    subscriptionId: subscription.id,
+    subscriptionPlanId: subscription.plan.id,
+    subscriptionStatus: subscription.status,
+    priceAmount: subscription.plan.amount / 100,
+    currency: subscription.plan.currency,
+    productId: subscription.plan.product,
+    customerId: subscription.customer,
+    userId: host._id,
+    customerRole: host.role,
+    latestInvoiceId: subscription.latest_invoice,
+    email: defaultPayment.billing_details.email,
+    name: defaultPayment.billing_details.name,
+    brand: defaultPayment.card.brand,
+    country: defaultPayment.card.country,
+    expMonth: defaultPayment.card.exp_month,
+    expYear: defaultPayment.card.exp_year,
+    funding: defaultPayment.card.funding,
+    last4: defaultPayment.card.last4,
+    created: new Date(defaultPayment.created * 1000),
+    type: defaultPayment.type,
+    oneTimeSubscription: false,
+    startedAt: new Date(subscription.current_period_start * 1000),
+    endsAt: new Date(subscription.current_period_end * 1000),
+  };
+
+  // Create a subscription booking
+  const foundedSubsciptionBooking = await Subscription.find({
+    userId: host._id,
+  });
+
+  if (foundedSubsciptionBooking.length > 0) {
+    await Subscription.findByIdAndDelete(foundedSubsciptionBooking[0]._id);
+  }
+
+  const subscriptionBooking = await Subscription.create(
+    subscriptionBookingData
+  );
+
+  // update host
+  host.isSubscriber = true;
+  host.subscription = subscriptionBooking._id;
+  await host.save({ validateBeforeSave: false });
+
+  // remove session id from paymentmetadata
+  paymentMetadata.sessionId = undefined;
+  await paymentMetadata.save({ validateBeforeSave: true });
+
+  res.status(CONST.OK).json({
+    status: CONST.SUCCESS,
+    message: 'Subscription created succesfuly',
+  });
+});
 
 exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
   const sig = req.headers['stripe-signature'];
@@ -296,7 +236,6 @@ exports.listendToSubscriptionWebhook = catchAsync(async (req, res, next) => {
   switch (event.type) {
     case 'checkout.session.completed':
       console.log('session completed');
-      createSubscriptionBooking(event.data.object.id);
       createSaveMetadata(event.data.object);
       break;
     case 'checkout.session.expired':
@@ -463,6 +402,7 @@ exports.getOne = handlerFactory.getOne(Host, {
         '-customerId',
       ],
     },
+    'paymentMetadata',
   ],
   select: hostSelectedFields,
 });

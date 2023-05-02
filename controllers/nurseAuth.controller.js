@@ -41,8 +41,12 @@ exports.signup = catchAsync(async (req, res, next) => {
   if (createdUser) {
     const verificationToken = await createdUser.createverifyToken();
     const user = await createdUser.save();
-    if (user) {
-      // send welcome email
+    const paymentMetadata = await PaymentMetadata.create({
+      nurse: user._id,
+    });
+    user.paymentMetadata = paymentMetadata._id;
+    const completeUser = await user.save({ validateBeforeSave: false });
+    if (completeUser) {
       isSuccess = await new Email(
         createdUser,
         `${process.env.FRONTEND_URL}/verifyEmail/${verificationToken}`,
@@ -51,6 +55,7 @@ exports.signup = catchAsync(async (req, res, next) => {
       ).sendWelcome();
       if (!isSuccess) {
         await Nurse.findByIdAndDelete(createdUser.id);
+        await PaymentMetadata.findByIdAndDelete(createdUser.paymentMetadata);
       } else {
         sendUserTokenSuccess(createdUser, req, res, CONST.CREATED);
       }
@@ -119,10 +124,12 @@ exports.verify = catchAsync(async (req, res, next) => {
   nurse.stripeCustomerId = customer.id;
   nurse.isConnected = true;
 
-  const paymentMetadata = await PaymentMetadata.create({
-    nurse: req.user._id.toString(),
-  });
-  nurse.paymentMetadata = paymentMetadata._id.toString();
+  if (!nurse.paymentMetadata) {
+    const paymentMetadata = await PaymentMetadata.create({
+      nurse: req.user._id.toString(),
+    });
+    nurse.paymentMetadata = paymentMetadata._id.toString();
+  }
 
   await nurse.save({ validateBeforeSave: false });
 

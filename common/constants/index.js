@@ -23,6 +23,7 @@ exports.SUBSCRIBTIONS = 'subscriptions';
 exports.BOOKINGS = 'bookings';
 exports.BOOKING_REQUESTS = 'bookingsRequests';
 exports.PAYMENT_METADATA = 'paymentMetadata';
+exports.CHATS = 'chats';
 exports.CANCEL = 'cancel';
 exports.SUBSCRIBE = '/subscribe';
 exports.FILTER = '/filter';

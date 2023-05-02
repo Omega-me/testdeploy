@@ -234,17 +234,57 @@ exports.checkIfPropertyBelongsToUser = catchAsync(async (req, res, next) => {
   next();
 });
 
-exports.searchForLocations = catchAsync(async (req, res, next) => {
-  const { search } = req.query;
+exports.getCountryAndCities = catchAsync(async (req, res, next) => {
+  const { type } = req.query;
 
-  const locations = await axios.get(
-    `https://nominatim.openstreetmap.org/search?format=geojson&limit=5&q=${search}`
-  );
+  if (!type) {
+    return next(
+      new AppError(
+        'You need to specify the type of what you want to get, types are state or city',
+        CONST.BAD_REQUEST
+      )
+    );
+  }
+
+  let results;
+  if (type === 'state') {
+    const response = await axios.post(
+      'https://countriesnow.space/api/v0.1/countries/states',
+      {
+        country: 'united states',
+      }
+    );
+    results = response?.data?.data?.states;
+  } else {
+    const response = await axios.post(
+      'https://countriesnow.space/api/v0.1/countries/population/cities/filter',
+      {
+        order: 'asc',
+        orderBy: 'name',
+        country: 'united states of america',
+      }
+    );
+    results = response?.data?.data.map((city) => {
+      const data = {
+        name: city.city
+          .split(' ')
+          .splice(0, city.city.split(' ').length - 1)
+          .join(' '),
+        city_code: city.city
+          .split(' ')
+          [city.city.split(' ').length - 1].split('(')
+          .join('')
+          .split(')')
+          .join(''),
+      };
+      return data;
+    });
+  }
 
   res.status(CONST.OK).json({
     status: CONST.SUCCESS,
-    results: locations?.data?.features.length,
-    data: locations?.data?.features,
+    results: results.length,
+    data: results,
   });
 });
 
